@@ -1,0 +1,20 @@
+# One-group deuteron demonstrator.  This represents H-2(d,p)H-3: a deuteron
+# beam on a deuterium target.  The 1 mb value is a deliberately illustrative
+# effective cross section, not evaluated reaction data; replace it with a
+# value averaged over the actual beam-energy distribution and target depth.
+deuteron_activation : deuteron_activation_simulation
+  title = "Deuterium target: H-2(d,p)H-3 demonstrator"
+  sample.isotope = "H2"
+  sample.mass = 1 ug
+  irradiation.duration = 1 day
+  irradiation.points = 101
+  irradiation.deuteron_flux = 1e12 1/(cm2*s)
+  irradiation.reaction.emitted_particle = "p"
+  irradiation.reaction.target = "H2"
+  irradiation.reaction.product = "H3"
+  irradiation.reaction.cross_section = 1e-27 cm2
+  cooldown.duration = 30 yr
+  cooldown.points = 301
+  output.csv = "h2-deuteron-activation.csv"
+  output.include_activity = true
+  output.include_q_power = true

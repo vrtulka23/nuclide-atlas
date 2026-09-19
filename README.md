@@ -138,6 +138,20 @@ Run the bundled U-238 → U-239 → Np-239 → Pu-239 example:
 
 The scenario is deliberately one-group: flux and capture cross section must represent the same neutron spectrum. Its U-238 capture value is an illustrative thermal value, not a general-purpose reactor constant. The U-239 and Np-239 half-lives, decay modes, and masses carry [NUBASE2020](https://www-nds.iaea.org/amdc/ame2020/NUBASE2020.pdf) provenance; NNDC’s [NuDat guide](https://www.nndc.bnl.gov/nudat3/guide/) describes the evaluated decay and neutron-reaction data available for more detailed models. The engine currently accepts one capture reaction per scenario; it does not model fission, self-shielding, spatial transport, a changing spectrum, or multiple capture channels. See [the activation workflow reference](docs/activation.md) for the complete input, output, and numerical contract.
 
+## One-group deuteron reactions
+
+The catalogue now includes deuterium (`H2`), tritium (`H3`), and helium-3 (`He3`). The `--deuteron-activation` workflow uses the same coupled-inventory solver for one configured residual-nuclide channel, with `d,p`, `d,n`, or `d,alpha` notation. For example, the bundled `H-2(d,p)H-3` scenario represents a deuteron beam incident on a deuterium target:
+
+```bash
+./build/nuclide-atlas --deuteron-activation \
+  --scenario dip/scenarios/h2_deuteron_activation.dip \
+  --output build/h2-deuteron-activation.csv
+.venv/bin/python python/plot_inventory.py \
+  build/h2-deuteron-activation.csv build/h2-deuteron-activation.png
+```
+
+This is a one-group effective-rate model: `rate = deuteron_flux × cross_section`. The cross section must already be averaged over the beam-energy distribution and target depth. The bundled 1 mb value is intentionally illustrative. Beam stopping, Coulomb-barrier penetration, energy-dependent or angle-dependent cross sections, secondary-particle transport, heating, and competing channels are not modelled. Use evaluated reaction data and a dedicated transport/depletion code for quantitative work.
+
 ### Build-time activation switch
 
 Activation is controlled by DIPL, not by a duplicated CMake option. In [`dip/build.dip`](dip/build.dip), set:
@@ -207,7 +221,7 @@ The bundled values are a compact seed dataset, rounded for readable source contr
 
 - A record currently supports one explicit daughter branch. Rare side branches and the intermediate members compressed in the Pu-239 demonstration path are not a substitute for an evaluated full chain.
 - When `output.include_q_power` is enabled, the code reports decay Q-value power. It is not deposited heat, because neutrino losses, radiation escape, sample geometry, and shielding are outside the model.
-- No uncertainty propagation, spontaneous fission, fission-product burnup, multigroup activation, transport, chemical separation, or external source term is modelled yet.
+- No uncertainty propagation, spontaneous fission, fission-product burnup, multigroup activation, beam-energy loss, transport, chemical separation, or external source term is modelled yet.
 
 These boundaries are intentionally prominent: a transparent calculator should make it easy to see what its data and model do—and do not—claim.
 

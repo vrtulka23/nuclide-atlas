@@ -22,6 +22,9 @@ $source Pb206 = "isotopes/Pb206.dip"
 $source Pu239 = "isotopes/Pu239.dip"
 $source U235 = "isotopes/U235.dip"
 $source Pb207 = "isotopes/Pb207.dip"
+$source H2 = "isotopes/H2.dip"
+$source H3 = "isotopes/H3.dip"
+$source He3 = "isotopes/He3.dip"
 
 # Contract applied to every isotope in the resolved catalogue.  The small source
 # files remain independently maintainable, while this registry is the quality
@@ -107,6 +110,29 @@ $schema activation_simulation
     include_activity bool
     include_q_power bool
 
+# One-group deuteron reaction contract.
+$schema deuteron_activation_simulation
+  title str
+  sample
+    isotope str
+    mass float g
+  irradiation
+    duration float s
+    points int
+    deuteron_flux float 1/(cm2*s)
+    reaction
+      emitted_particle str
+      target str
+      product str
+      cross_section float cm2
+  cooldown
+    duration float s
+    points int
+  output
+    csv str
+    include_activity bool
+    include_q_power bool
+
 nuclear
   constants {constants?constants.}
   elements
@@ -155,3 +181,9 @@ nuclear
     {U235?isotope.}
   isotopes[Pb207]
     {Pb207?isotope.}
+  isotopes[H2]
+    {H2?isotope.}
+  isotopes[H3]
+    {H3?isotope.}
+  isotopes[He3]
+    {He3?isotope.}

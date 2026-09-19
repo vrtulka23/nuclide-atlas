@@ -43,15 +43,31 @@ def verify_activation(rows: list[dict[str, str]]) -> None:
     require(float(rows[-1]["Pu239_atoms"]) > 1e18, "activation scenario no longer breeds expected Pu-239 inventory")
 
 
+def verify_deuteron(rows: list[dict[str, str]]) -> None:
+    columns = rows[0].keys()
+    require("deuteron_reactions_per_s" in columns, "deuteron rate must use reaction-rate units")
+    require("H2_atoms" in columns and "H3_atoms" in columns and "He3_atoms" in columns, "deuterium reaction chain is incomplete")
+    initial = float(rows[0]["total_atoms"])
+    for row in rows:
+        reported = float(row["total_atoms"])
+        loss = float(row["untracked_loss_atoms"])
+        require(abs(reported + loss - initial) / initial <= 5e-12, "deuteron atom balance drifted")
+        if row["phase"] == "cooldown":
+            require(float(row["deuteron_reactions_per_s"]) == 0.0, "deuteron reaction continued during cooldown")
+    require(float(rows[-1]["H3_atoms"]) > 1e6, "deuteron scenario no longer produces tritium")
+
+
 def main() -> None:
     if len(sys.argv) != 3:
-        raise SystemExit("usage: verify_outputs.py {inventory|activation} FILE.csv")
+        raise SystemExit("usage: verify_outputs.py {inventory|activation|deuteron} FILE.csv")
     kind, filename = sys.argv[1:]
     rows = read_rows(Path(filename))
     if kind == "inventory":
         verify_inventory(rows)
     elif kind == "activation":
         verify_activation(rows)
+    elif kind == "deuteron":
+        verify_deuteron(rows)
     else:
         raise SystemExit(f"unknown test kind: {kind}")
 

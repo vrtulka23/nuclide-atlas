@@ -1,0 +1,21 @@
+isotope
+  id str = "H2"
+    ?descr "Deuterium (hydrogen-2), the stable isotope whose bare nucleus is a deuteron."
+    ?authors "F. G. Kondev, M. Wang, W. J. Huang, S. Naimi, G. Audi"
+    ?title "The NUBASE2020 evaluation of nuclear physics properties"
+    ?journal "Chinese Physics C"
+    ?year 2021
+    ?volume 45
+    ?pages "030001"
+    ?doi "10.1088/1674-1137/abddae"
+    ?url "https://www-nds.iaea.org/amdc/ame2020/NUBASE2020.pdf"
+    ?version "NUBASE2020; accessed 2026-09-19"
+  label str = "deuterium (hydrogen-2)"
+  atomic_mass float = 2.01410177812 g/mol
+  stable bool = true
+  half_life float = 0 s
+  decay
+    daughter str = "none"
+    branching float = 0.0
+    mode str = "stable"
+    energy float = 0 MeV

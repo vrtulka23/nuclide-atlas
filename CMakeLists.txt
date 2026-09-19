@@ -76,6 +76,20 @@ if(BUILD_TESTING)
             )
             set_tests_properties(u238_activation_numerics PROPERTIES DEPENDS u238_activation)
         endif()
+        add_test(
+            NAME h2_deuteron_activation
+            COMMAND nuclide-atlas --deuteron-activation
+                    --scenario "${CMAKE_CURRENT_SOURCE_DIR}/dip/scenarios/h2_deuteron_activation.dip"
+                    --output "${CMAKE_CURRENT_BINARY_DIR}/h2_deuteron_activation.csv"
+        )
+        if(Python3_Interpreter_FOUND)
+            add_test(
+                NAME h2_deuteron_activation_numerics
+                COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/verify_outputs.py"
+                        deuteron "${CMAKE_CURRENT_BINARY_DIR}/h2_deuteron_activation.csv"
+            )
+            set_tests_properties(h2_deuteron_activation_numerics PROPERTIES DEPENDS h2_deuteron_activation)
+        endif()
     endif()
 endif()
 

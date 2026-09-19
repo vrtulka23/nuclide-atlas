@@ -20,6 +20,8 @@ Usage: ./setup.sh [options]
   -r, --run         Run the selected scenario and write build/inventory.csv.
   -p, --plot        Generate build/inventory.png.
   -a, --activation  Treat the selected scenario as a neutron-activation run.
+  -d, --deuteron-activation
+                    Treat the selected scenario as a one-group deuteron-reaction run.
   -s, --scenario    Scenario DIPL file for --run (default: dip/scenarios/u238_age.dip).
       --clean       Remove this project's build directory.
   -h, --help        Show this help.
@@ -28,6 +30,7 @@ Examples:
   ./setup.sh -bc              # configure and compile
   ./setup.sh -bctr            # configure, compile, test, then run
   ./setup.sh -ar -s dip/scenarios/u238_activation.dip
+  ./setup.sh -dr -s dip/scenarios/h2_deuteron_activation.dip
   ./setup.sh --clean -bc -r   # clean rebuild and run
 
 Environment:
@@ -64,10 +67,11 @@ test_project() { ctest --test-dir "${build_dir}" --output-on-failure; }
 run_project() {
     local -a run_args=(--scenario "${scenario}" --output "${build_dir}/inventory.csv")
     $do_activation && run_args+=(--activation)
+    $do_deuteron_activation && run_args+=(--deuteron-activation)
     "${build_dir}/nuclide-atlas" "${run_args[@]}"
 }
 plot_project() {
-    if $do_activation; then
+    if $do_activation || $do_deuteron_activation; then
         $do_run || run_project
         cmake -E make_directory "${build_dir}/.plot-cache"
         cmake -E env "MPLCONFIGDIR=${build_dir}/.plot-cache" "XDG_CACHE_HOME=${build_dir}/.plot-cache" \
@@ -77,10 +81,10 @@ plot_project() {
     fi
 }
 
-do_build=false do_compile=false do_test=false do_run=false do_plot=false do_clean=false do_activation=false
+do_build=false do_compile=false do_test=false do_run=false do_plot=false do_clean=false do_activation=false do_deuteron_activation=false
 while (($#)); do
     case "$1" in
-        -[bctrpa]*)
+        -[bctrdpa]*)
             flags="${1#-}"
             for ((index = 0; index < ${#flags}; ++index)); do
                 case "${flags:index:1}" in
@@ -90,6 +94,7 @@ while (($#)); do
                     r) do_run=true ;;
                     p) do_plot=true ;;
                     a) do_activation=true ;;
+                    d) do_deuteron_activation=true ;;
                     *) echo "Unknown short option: -${flags:index:1}" >&2; exit 2 ;;
                 esac
             done
@@ -100,6 +105,7 @@ while (($#)); do
         -r|--run) do_run=true ;;
         -p|--plot) do_plot=true ;;
         -a|--activation) do_activation=true ;;
+        -d|--deuteron-activation) do_deuteron_activation=true ;;
         --clean) do_clean=true ;;
         -s|--scenario)
             shift
@@ -114,6 +120,11 @@ done
 
 if ! $do_build && ! $do_compile && ! $do_test && ! $do_run && ! $do_plot && ! $do_clean; then
     usage
+    exit 2
+fi
+
+if $do_activation && $do_deuteron_activation; then
+    echo "Choose either --activation or --deuteron-activation" >&2
     exit 2
 fi
 

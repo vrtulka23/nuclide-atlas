@@ -48,12 +48,12 @@ def main(input_name: str, output_name: str) -> None:
     ]
     has_activity = "total_activity_bq" in rows[0]
     has_q_power = "total_q_power_w" in rows[0]
-    capture_column = next(
-        (name for name in ("capture_reactions_per_s", "capture_rate_bq") if name in rows[0]), None
+    reaction_column = next(
+        (name for name in ("capture_reactions_per_s", "deuteron_reactions_per_s", "capture_rate_bq") if name in rows[0]), None
     )
-    has_capture = capture_column is not None
+    has_reaction = reaction_column is not None
     has_signals = has_activity or has_q_power
-    panel_count = 3 + int(has_signals) + int(has_capture)
+    panel_count = 3 + int(has_signals) + int(has_reaction)
     figure, axes_grid = plt.subplots(panel_count, 1, figsize=(13, 2.8 + 2.8 * panel_count), layout="constrained", squeeze=False)
     axes = axes_grid[:, 0]
     labels = [column.removesuffix("_atoms") for column in atom_columns]
@@ -110,15 +110,16 @@ def main(input_name: str, output_name: str) -> None:
             power_ax.tick_params(axis="y", labelcolor="#8b5cf6")
         signal_ax.grid(True, which="both", alpha=0.2)
 
-    if has_capture:
-        capture_ax = axes[next_axis]
+    if has_reaction:
+        reaction_ax = axes[next_axis]
         next_axis += 1
-        capture = np.asarray([float(row[capture_column]) for row in rows])
-        active = capture > 0.0
-        capture_ax.plot(years[active], capture[active], color="#0891b2", linewidth=2.2)
-        capture_ax.fill_between(years[active], capture[active], capture[active].min() * 0.7, color="#67e8f9", alpha=0.32)
-        capture_ax.set(xscale="log", yscale="log", xlabel="time [Julian years]", ylabel="captures / s", title="Neutron-capture production rate")
-        capture_ax.grid(True, which="both", alpha=0.2)
+        reaction = np.asarray([float(row[reaction_column]) for row in rows])
+        active = reaction > 0.0
+        reaction_ax.plot(years[active], reaction[active], color="#0891b2", linewidth=2.2)
+        reaction_ax.fill_between(years[active], reaction[active], reaction[active].min() * 0.7, color="#67e8f9", alpha=0.32)
+        title = "Deuteron reaction rate" if reaction_column == "deuteron_reactions_per_s" else "Neutron-capture production rate"
+        reaction_ax.set(xscale="log", yscale="log", xlabel="time [Julian years]", ylabel="reactions / s", title=title)
+        reaction_ax.grid(True, which="both", alpha=0.2)
 
     composition_ax = axes[next_axis]
     final_atoms = atoms[:, -1]

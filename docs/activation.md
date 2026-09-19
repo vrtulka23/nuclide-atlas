@@ -84,3 +84,30 @@ The bundled plot is a dashboard: a log-inventory heatmap shows which members dom
 - No uncertainty propagation, radiation transport, dose calculation, or thermal model.
 
 Use evaluated, spectrum-appropriate reaction data for any serious investigation. The bundled records are compact demonstrator data with [NUBASE2020](https://www-nds.iaea.org/amdc/ame2020/NUBASE2020.pdf) provenance; NNDC’s [NuDat documentation](https://www.nndc.bnl.gov/nudat3/guide/) describes its evaluated reaction and decay data coverage.
+
+## One-group deuteron reactions
+
+`--deuteron-activation` accepts a separate `deuteron_activation_simulation` contract. It propagates one target-residual reaction edge while a constant deuteron flux is applied, then follows ordinary radioactive decay during cooldown:
+
+```dip
+deuteron_activation : deuteron_activation_simulation
+  title = "Deuterium target: H-2(d,p)H-3 demonstrator"
+  sample.isotope = "H2"
+  sample.mass = 1 ug
+  irradiation.duration = 1 day
+  irradiation.points = 101
+  irradiation.deuteron_flux = 1e12 1/(cm2*s)
+  irradiation.reaction.emitted_particle = "p"
+  irradiation.reaction.target = "H2"
+  irradiation.reaction.product = "H3"
+  irradiation.reaction.cross_section = 1e-27 cm2
+  cooldown.duration = 30 yr
+  cooldown.points = 301
+  output.csv = "h2-deuteron-activation.csv"
+  output.include_activity = true
+  output.include_q_power = true
+```
+
+The supported labels are `d,p`, `d,n`, and `d,alpha`; each denotes the emitted particle in `target(d,particle)product` notation. The target-to-product edge is a residual-inventory model, not a transport simulation of emitted particles. Its rate is `deuteron_flux × cross_section`, and the output column is `deuteron_reactions_per_s`.
+
+The model is appropriate for transparent, effective-rate demonstrations when the supplied cross section has already been averaged over the actual incident-energy distribution and target depth. It does not calculate the energy dependence of a deuteron reaction, beam slowing or straggling, charged-particle transport, angular distributions, heating, or several competing channels. The included H-2(d,p)H-3 cross section is illustrative only, not evaluated data.

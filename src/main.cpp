@@ -280,22 +280,43 @@ std::vector<double> propagate_activation(const Matrix& transition, const double 
     return values;
 }
 
-void run_activation(const Environment& env, fs::path output) {
-    const std::string sample = env["activation.sample.isotope"].as<std::string>();
-    const double mass_g = quantity_as(env, "activation.sample.mass", "g");
-    const double irradiation_s = quantity_as(env, "activation.irradiation.duration", "s");
-    const std::size_t irradiation_points = static_cast<std::size_t>(env["activation.irradiation.points"].as<int64_t>());
-    const double flux = quantity_as(env, "activation.irradiation.neutron_flux", "1/(cm2*s)");
-    const std::string capture_target = env["activation.irradiation.capture.target"].as<std::string>();
-    const std::string capture_product = env["activation.irradiation.capture.product"].as<std::string>();
-    const double cross_section = quantity_as(env, "activation.irradiation.capture.cross_section", "cm2");
-    const double cooldown_s = quantity_as(env, "activation.cooldown.duration", "s");
-    const std::size_t cooldown_points = static_cast<std::size_t>(env["activation.cooldown.points"].as<int64_t>());
+void run_activation(
+    const Environment& env,
+    fs::path output,
+    const std::string& root,
+    const std::string& flux_field,
+    const std::string& reaction_field,
+    const std::string& reaction_channel,
+    const std::string& reaction_rate_column
+) {
+    const std::string prefix = root + ".";
+    const std::string reaction_prefix = prefix + "irradiation." + reaction_field;
+    const std::string sample = env[prefix + "sample.isotope"].as<std::string>();
+    const double mass_g = quantity_as(env, prefix + "sample.mass", "g");
+    const double irradiation_s = quantity_as(env, prefix + "irradiation.duration", "s");
+    const int64_t irradiation_point_count = env[prefix + "irradiation.points"].as<int64_t>();
+    const double flux = quantity_as(env, prefix + "irradiation." + flux_field, "1/(cm2*s)");
+    const std::string capture_target = env[reaction_prefix + ".target"].as<std::string>();
+    const std::string capture_product = env[reaction_prefix + ".product"].as<std::string>();
+    const double cross_section = quantity_as(env, reaction_prefix + ".cross_section", "cm2");
+    const double cooldown_s = quantity_as(env, prefix + "cooldown.duration", "s");
+    const int64_t cooldown_point_count = env[prefix + "cooldown.points"].as<int64_t>();
     const double avogadro = quantity_as(env, "nuclear.constants.avogadro", "1/mol");
     const double seconds_per_year = quantity_as(env, "nuclear.constants.seconds_per_year", "s");
     const double joules_per_mev = quantity_as(env, "nuclear.constants.joules_per_mev", "J/MeV");
-    const bool include_activity = env["activation.output.include_activity"].as<bool>();
-    const bool include_q_power = env["activation.output.include_q_power"].as<bool>();
+    const bool include_activity = env[prefix + "output.include_activity"].as<bool>();
+    const bool include_q_power = env[prefix + "output.include_q_power"].as<bool>();
+    if (!std::isfinite(mass_g) || !std::isfinite(irradiation_s) || !std::isfinite(flux) || !std::isfinite(cross_section) || !std::isfinite(cooldown_s)
+        || mass_g <= 0.0 || irradiation_s <= 0.0 || irradiation_point_count < 2 || irradiation_point_count > 100000
+        || flux <= 0.0 || cross_section <= 0.0 || cooldown_s < 0.0 || cooldown_point_count < 2 || cooldown_point_count > 100000)
+        throw std::runtime_error("irradiation and cooldown values must be physically valid");
+    if (root == "deuteron_activation") {
+        const std::string emitted_particle = env[reaction_prefix + ".emitted_particle"].as<std::string>();
+        if (emitted_particle != "p" && emitted_particle != "n" && emitted_particle != "alpha")
+            throw std::runtime_error("deuteron emitted_particle must be p, n, or alpha");
+    }
+    const std::size_t irradiation_points = static_cast<std::size_t>(irradiation_point_count);
+    const std::size_t cooldown_points = static_cast<std::size_t>(cooldown_point_count);
     const auto network = activation_network(env, sample, capture_product);
     const auto sample_it = std::find_if(network.nuclides.begin(), network.nuclides.end(), [&](const Nuclide& n) { return n.id == sample; });
     if (sample_it == network.nuclides.end()) throw std::runtime_error("activation sample is absent from its network");
@@ -307,13 +328,13 @@ void run_activation(const Environment& env, fs::path output) {
     std::vector<double> initial(network.nuclides.size() + 1);
     initial[static_cast<std::size_t>(std::distance(network.nuclides.begin(), sample_it))] = mass_g / sample_it->atomic_mass_g_mol * avogadro;
     const auto end_of_irradiation = propagate_activation(during_irradiation, irradiation_s, initial);
-    if (output.empty()) output = env["activation.output.csv"].as<std::string>();
+    if (output.empty()) output = env[prefix + "output.csv"].as<std::string>();
     std::ofstream csv(output);
     if (!csv) throw std::runtime_error("cannot open output: " + output.string());
     csv << "time_s,time_yr,phase,total_atoms";
     if (include_activity) csv << ",total_activity_bq";
     if (include_q_power) csv << ",total_q_power_w";
-    csv << ",capture_reactions_per_s,untracked_loss_atoms";
+    csv << ',' << reaction_rate_column << ",untracked_loss_atoms";
     for (const auto& nuclide : network.nuclides) {
         csv << ',' << nuclide.id << "_atoms";
         if (include_activity) csv << ',' << nuclide.id << "_activity_bq";
@@ -353,8 +374,8 @@ void run_activation(const Environment& env, fs::path output) {
         write_snapshot(irradiation_s + elapsed_s, "cooldown", propagate_activation(during_cooldown, elapsed_s, end_of_irradiation));
     }
     std::cout << "Nuclide Atlas activation\n"
-              << "  scenario: " << env["activation.title"].as<std::string>() << '\n'
-              << "  reaction: " << capture_target << " (n,gamma) " << capture_product << '\n'
+              << "  scenario: " << env[prefix + "title"].as<std::string>() << '\n'
+              << "  reaction: " << capture_target << " (" << reaction_channel << ") " << capture_product << '\n'
               << "  flux:     " << flux << " 1/(cm2*s)\n"
               << "  output:   " << output << '\n';
 }
@@ -371,7 +392,7 @@ void print_nuclide(const Nuclide& n) {
 void usage() {
     std::cout << "Usage: nuclide-atlas [--scenario FILE] [--output FILE] [--data DIR] [--isotope ID] [--list]";
 #if SNT_NUCLEAR_ENABLE_ACTIVATION
-    std::cout << " [--activation]";
+    std::cout << " [--activation] [--deuteron-activation]";
 #endif
     std::cout << '\n';
 }
@@ -386,6 +407,7 @@ int main(int argc, char** argv) {
         std::string inspect;
         bool list = false;
         bool activation = false;
+        bool deuteron_activation = false;
         for (int i = 1; i < argc; ++i) {
             const std::string arg = argv[i];
             auto value = [&](const char* name) -> std::string {
@@ -399,8 +421,10 @@ int main(int argc, char** argv) {
             else if (arg == "--list") list = true;
 #if SNT_NUCLEAR_ENABLE_ACTIVATION
             else if (arg == "--activation") activation = true;
+            else if (arg == "--deuteron-activation") deuteron_activation = true;
 #else
             else if (arg == "--activation") throw std::runtime_error("activation support was disabled in dip/build.dip");
+            else if (arg == "--deuteron-activation") throw std::runtime_error("activation support was disabled in dip/build.dip");
 #endif
             else if (arg == "--help" || arg == "-h") { usage(); return 0; }
             else throw std::runtime_error("unknown option: " + arg);
@@ -428,8 +452,21 @@ int main(int argc, char** argv) {
         if (!inspect.empty()) { print_nuclide(read_nuclide(env, inspect)); return 0; }
 
 #if SNT_NUCLEAR_ENABLE_ACTIVATION
+        if (activation && deuteron_activation) throw std::runtime_error("choose either --activation or --deuteron-activation");
         if (activation) {
-            run_activation(env, output);
+            run_activation(env, output, "activation", "neutron_flux", "capture", "n,gamma", "capture_reactions_per_s");
+            return 0;
+        }
+        if (deuteron_activation) {
+            run_activation(
+                env,
+                output,
+                "deuteron_activation",
+                "deuteron_flux",
+                "reaction",
+                "d," + env["deuteron_activation.irradiation.reaction.emitted_particle"].as<std::string>(),
+                "deuteron_reactions_per_s"
+            );
             return 0;
         }
 #endif

@@ -2,6 +2,6 @@ build/
 out/
 *.csv
 *.png
+!docs/assets/u238-inventory.png
 __pycache__/
 .venv/
-

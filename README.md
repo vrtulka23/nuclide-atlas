@@ -42,6 +42,18 @@ python/
 cmake/
 ```
 
+## Why SciNumTools3 is useful here
+
+YAML could store the same numbers, but it would leave Nuclide Atlas to build its own parser, unit converter, schema validator, reference resolver, provenance convention, and CMake bridge. SciNumTools3 gives this project those scientific semantics in one shared layer:
+
+- `4.5 Gyr`, `100 ng`, `g/mol`, `MeV`, and `Bq` are physical quantities, not strings that the solver must interpret ad hoc.
+- DIPL rejects invalid scenario values before C++ runs—such as a non-positive duration or a mass supplied where a time is required.
+- Each isotope lives in an independently reviewable DIPL source and is imported into a coherent database; adding data does not require changing the solver.
+- The same resolved data model is consumable from C++, Python, the SNT CLI, and CMake. `cmake/build.dip`, for example, controls build policy through `snt_dip_get()`.
+- Citation metadata is attached to values with DIPL `?doi`, `?authors`, and related properties rather than being an unstructured comment beside a number.
+
+That matters once this grows beyond a toy chain: the solver remains small because data integrity, units, validation, and provenance are handled consistently upstream of it.
+
 ## Quick start
 
 SciNumTools3 must be installed with its CMake package files and the `snt` CLI. The project is tested against current SNT master commit [`9d60fc0`](https://github.com/vrtulka23/scinumtools3/commit/9d60fc0bd6c1f59d473eff6aeacc2fdae5d79dbc). A source installation is the most direct route:
@@ -58,7 +70,9 @@ cmake -S . -B build -G Ninja -DCMAKE_PREFIX_PATH="$HOME/.local"
 cmake --build build
 ```
 
-For the usual configure/build/test/run loop, use the included helper:
+### Fast development loop
+
+For the usual configure/build/test/run loop, use the included helper instead of repeating the CMake commands:
 
 ```bash
 chmod +x dev.sh
@@ -80,6 +94,12 @@ That writes `build/inventory.csv` and `build/inventory.png`. To make the same ru
 ```bash
 python3 python/plot_inventory.py build/inventory.csv build/inventory.png
 ```
+
+### Example output
+
+The default one-gram U-238 scenario spans microsecond daughters through 4.5 billion years, showing both nuclide inventory and total activity on a logarithmic time axis.
+
+![U-238 decay-chain inventory and total activity](docs/assets/u238-inventory.png)
 
 Query rather than simulate:
 

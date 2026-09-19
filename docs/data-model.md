@@ -19,7 +19,7 @@ All numerical fields have a unit. `data/nuclear.dip` imports a file per record a
 
 ## Simulation schema
 
-`data/nuclear.dip` also declares the reusable `nuclear_simulation` schema. It defines the input contract once: sample isotope format, mass in mass dimensions, duration and minimum time in time dimensions, positive-value constraints, reporting-point minimum, supported time grids, and output fields. A scenario is therefore only an assignment layer:
+`data/nuclear.dip` also declares the reusable `nuclear_simulation` schema. It defines the input contract once: a bounded title, sample-isotope format, mass in mass dimensions, duration and minimum time in time dimensions, a `minimum_time < duration` cross-field rule, a 2-to-1,000,000 reporting-point limit, supported time grids, and a CSV filename format. A scenario is therefore only an assignment layer:
 
 ```dip
 simulation : nuclear_simulation
@@ -30,6 +30,17 @@ simulation : nuclear_simulation
 ```
 
 This is more than a template: DIPL applies the schema while parsing and rejects incompatible units or invalid choices before the C++ solver sees them.
+
+## DIPL features used without custom infrastructure
+
+The project gets the following capabilities from DIPL/PUQ rather than reimplementing them around a generic text format:
+
+- `$source` and hierarchical imports compose one auditable database from individual isotope files.
+- `$schema` applies one input contract to every scenario.
+- `!format`, `!options`, and `!condition` validate strings, enumerations, units, ranges, and cross-field relationships.
+- PUQ parses and converts physical quantities, so `4.5 Gyr` satisfies a schema declared in seconds and `100 ng` satisfies one declared in grams.
+- `?authors`, `?doi`, `?url`, and related properties attach citations to a value without adding solver data fields.
+- Expressions, references, arrays, custom units, tags, constants, and DIPL-to-CMake `snt_dip_get()` remain available as the model grows.
 
 Provenance is attached to the `id` value through DIPL metadata properties—not model data nodes—using `?authors`, `?title`, `?journal`, `?year`, `?doi`, `?url`, and `?version`. That keeps citations available to DIPL-aware consumers while ensuring they never enter the solver's parameter namespace.
 

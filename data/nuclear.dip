@@ -25,6 +25,7 @@ $source Pb207 = "isotopes/Pb207.dip"
 # their types, units, constraints, and allowed grid choices live here.
 $schema nuclear_simulation
   title str
+    !format ".{3,160}"
   sample
     isotope str
       !format "[A-Z][a-z]?[0-9]+m?"
@@ -33,13 +34,14 @@ $schema nuclear_simulation
   duration float s
     !condition ({.} > 0 s)
   points int
-    !condition ({.} >= 2)
+    !condition ({.} >= 2 && {.} <= 1000000)
   time_grid str
     !options ["linear", "logarithmic"]
   minimum_time float s
-    !condition ({.} > 0 s)
+    !condition ({.} > 0 s && {.} < {?simulation.duration})
   output
     csv str
+      !format "[A-Za-z0-9_./-]+[.]csv"
     include_activity bool
 
 nuclear

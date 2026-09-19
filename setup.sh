@@ -10,7 +10,7 @@ python_bin="${PYTHON:-python3}"
 
 usage() {
     cat <<'EOF'
-Usage: ./dev.sh [options]
+Usage: ./setup.sh [options]
 
   -b, --build       Configure the CMake build directory.
   -c, --compile     Compile Nuclide Atlas.
@@ -22,9 +22,9 @@ Usage: ./dev.sh [options]
   -h, --help        Show this help.
 
 Examples:
-  ./dev.sh -bc              # configure and compile
-  ./dev.sh -bctr            # configure, compile, test, then run
-  ./dev.sh --clean -bc -r   # clean rebuild and run
+  ./setup.sh -bc              # configure and compile
+  ./setup.sh -bctr            # configure, compile, test, then run
+  ./setup.sh --clean -bc -r   # clean rebuild and run
 
 Environment:
   CMAKE_PREFIX_PATH  SciNumTools3 install prefix (default: $HOME/.local)

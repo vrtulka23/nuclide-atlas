@@ -75,11 +75,11 @@ cmake --build build
 For the usual configure/build/test/run loop, use the included helper instead of repeating the CMake commands:
 
 ```bash
-chmod +x dev.sh
-./dev.sh -bctr
+chmod +x setup.sh
+./setup.sh -bctr
 ```
 
-`-b` configures, `-c` compiles, `-t` tests, `-r` runs, `-p` plots, and `--clean` removes only `build/`. Run `./dev.sh --help` for all options.
+`-b` configures, `-c` compiles, `-t` tests, `-r` runs, `-p` plots, and `--clean` removes only `build/`. Run `./setup.sh --help` for all options.
 
 Run the default U-238 age calculation:
 

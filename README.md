@@ -59,10 +59,10 @@ All project DIPL files deliberately live under `dip/`: `dip/data/` is the nuclea
 
 ## Quick start
 
-SciNumTools3 must be installed system-wide with its CMake package files and the `snt` CLI. CMake discovers packages in standard system prefixes automatically, so no per-project prefix setting is needed. The project is tested against current SNT master commit [`9d60fc0`](https://github.com/vrtulka23/scinumtools3/commit/9d60fc0bd6c1f59d473eff6aeacc2fdae5d79dbc). To build and install it from source:
+SciNumTools3 **v0.8.1 or newer** must be installed system-wide with its CMake package files and the `snt` CLI. CMake discovers packages in standard system prefixes automatically, so no per-project prefix setting is needed. To build and install the required release from source:
 
 ```bash
-git clone https://github.com/vrtulka23/scinumtools3.git
+git clone --branch v0.8.1 https://github.com/vrtulka23/scinumtools3.git
 cmake -S scinumtools3 -B scinumtools3/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX=/usr/local -DENABLE_UNIT_TESTS=OFF \
   -DENABLE_BINDING_PYTHON=OFF -DENABLE_BINDING_C=OFF -DENABLE_EXEC_EXAMPLES=OFF
@@ -174,8 +174,26 @@ Query rather than simulate:
 ```bash
 ./build/nuclide-atlas --list
 ./build/nuclide-atlas --isotope U238
+./build/nuclide-atlas --explain U239
+./build/nuclide-atlas --trace U239.half_life
 ./build/nuclide-atlas --scenario dip/scenarios/pu239_heat.dip --output build/pu239.csv
 ```
+
+`--explain` displays the resolved record, dimensional and relationship checks, and its cited record provenance. `--trace` follows a supported field to its resolved value, original unit, SI conversion, DIPL source location, schema path, and provenance record. Citation metadata is presently attached at the record `id`, so trace reports that relationship explicitly rather than implying field-level citations that the seed data does not yet carry.
+
+## DIPH5 environment persistence
+
+SciNumTools v0.8.1 can persist an evaluated DIPL environment in its HDF5-based **DIPH5** format. Nuclide Atlas exposes that capability without replacing CSV inventory output:
+
+```bash
+# Parse the catalogue and selected scenario, then save the resolved environment.
+./build/nuclide-atlas --save-environment build/u238-age.diph5
+
+# Later, inspect the self-contained environment.
+./build/nuclide-atlas --load-environment build/u238-age.diph5 --explain U239
+```
+
+The snapshot preserves evaluated values, units, hierarchy, validation settings, and node-level provenance. Nuclide Atlas copies each record’s citation metadata onto its resolved ID before saving, so `--explain` and `--trace` retain citations after loading. It is a persisted **input environment**, not an HDF5 replacement for the generated inventory CSV; the latter remains the portable results contract. A snapshot made while running an ordinary scenario also contains that scenario and can be used for a later calculation. DIPH5 loading intentionally does not reconstruct the original source registry, so source-qualified lookups are unavailable after loading.
 
 ## Scenarios and data
 

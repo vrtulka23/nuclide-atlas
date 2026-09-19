@@ -5,7 +5,7 @@ project(nuclide_atlas VERSION 0.1.0 LANGUAGES CXX)
 # SNT is a first-class package dependency. Its package config exposes both the
 # C++ targets and a host `snt` CLI; the latter evaluates build.dip at configure
 # time. This deliberately keeps the CMake feature visible and reproducible.
-find_package(snt CONFIG REQUIRED)
+find_package(snt 0.8.1 CONFIG REQUIRED)
 snt_dip_get(
     FILE "${CMAKE_CURRENT_SOURCE_DIR}/dip/build.dip"
     PATH build.cxx_standard
@@ -53,6 +53,19 @@ if(BUILD_TESTING)
         COMMAND nuclide-atlas --scenario "${CMAKE_CURRENT_SOURCE_DIR}/dip/scenarios/u238_age.dip"
                 --output "${CMAKE_CURRENT_BINARY_DIR}/u238_inventory.csv"
     )
+    add_test(NAME explain_u239 COMMAND nuclide-atlas --explain U239)
+    add_test(NAME trace_u239_half_life COMMAND nuclide-atlas --trace U239.half_life)
+    add_test(
+        NAME save_catalogue_diph5
+        COMMAND nuclide-atlas --isotope U239
+                --save-environment "${CMAKE_CURRENT_BINARY_DIR}/catalogue.diph5"
+    )
+    add_test(
+        NAME load_catalogue_diph5
+        COMMAND nuclide-atlas --load-environment "${CMAKE_CURRENT_BINARY_DIR}/catalogue.diph5"
+                --isotope U239
+    )
+    set_tests_properties(load_catalogue_diph5 PROPERTIES DEPENDS save_catalogue_diph5)
     if(Python3_Interpreter_FOUND)
         add_test(
             NAME u238_inventory_numerics

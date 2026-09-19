@@ -15,6 +15,7 @@
 #include <map>
 #include <numbers>
 #include <numeric>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -97,6 +98,160 @@ double quantity_as(const Environment& env, const std::string& path, const std::s
     const auto* values = dynamic_cast<const snt::val::ArrayValue<double>*>(converted.measurement.result.estimate.get());
     if (!values || values->get_size() != 1) throw std::runtime_error("parameter '" + path + "' is not a scalar float");
     return values->get_value(0);
+}
+
+Nuclide read_nuclide(const Environment& env, const std::string& id);
+
+std::string format_scalar(const double value) {
+    std::ostringstream output;
+    output << std::setprecision(12) << value;
+    return output.str();
+}
+
+std::string format_quantity(const Environment& env, const std::string& path) {
+    const auto cursor = env[path];
+    const auto unit = cursor.get_units();
+    if (!unit) throw std::runtime_error("parameter '" + path + "' has no physical unit");
+    return format_scalar(cursor.as<double>()) + " " + unit->to_string();
+}
+
+std::string format_declared_value(const snt::dip::ValueNode::PointerType& node) {
+    if (!node || node->value_raw.size() != 1) return "unavailable";
+    return node->value_raw.front() + (node->units_raw.empty() ? "" : " " + node->units_raw);
+}
+
+const snt::dip::ValueNode::PointerType source_record_node(
+    const Environment& env, const std::string& id, const std::string_view field
+) {
+    try {
+        const auto& source = env.sources.at(id);
+        const std::string expected_path = "isotope." + std::string(field);
+        for (const auto& node : source.nodes.get_nodes())
+            if (node->path.name == expected_path) return node;
+    } catch (const std::exception&) {
+        // DIPH5 preserves node-level provenance but intentionally does not
+        // restore the original source registry.
+    }
+    return nullptr;
+}
+
+void materialize_record_provenance(Environment& env) {
+    // DIPL imports preserve the source registry, but the resolved isotope map
+    // intentionally contains only model values.  Copy record-level citation
+    // metadata onto each resolved ID before writing DIPH5 so a loaded snapshot
+    // remains self-describing even though DIPH5 does not restore $source.
+    for (const auto& [id, _] : env["nuclear.isotopes"].items()) {
+        const auto source_id = source_record_node(env, id, "id");
+        if (source_id) env["nuclear.isotopes[" + id + "].id"].get_node()->metadata = source_id->metadata;
+    }
+}
+
+void print_record_provenance(const Environment& env, const std::string& id, const std::string_view indent = "") {
+    const auto id_node = source_record_node(env, id, "id");
+    const auto resolved_id_node = env["nuclear.isotopes[" + id + "].id"].get_node();
+    const auto& metadata = id_node ? id_node->metadata : resolved_id_node->metadata;
+    if (metadata.title.empty() && metadata.doi.empty() && metadata.url.empty()) {
+        std::cout << indent << "No record-level provenance metadata supplied.\n";
+        return;
+    }
+    if (!metadata.title.empty()) std::cout << indent << "title:   " << metadata.title << '\n';
+    if (!metadata.authors.empty()) std::cout << indent << "authors: " << metadata.authors << '\n';
+    if (!metadata.journal.empty()) std::cout << indent << "journal: " << metadata.journal;
+    if (!metadata.year.empty()) std::cout << (metadata.journal.empty() ? "" : " ") << metadata.year;
+    if (!metadata.journal.empty() || !metadata.year.empty()) std::cout << '\n';
+    if (!metadata.doi.empty()) std::cout << indent << "DOI:     " << metadata.doi << '\n';
+    if (!metadata.url.empty()) std::cout << indent << "URL:     " << metadata.url << '\n';
+    if (!metadata.version.empty()) std::cout << indent << "version: " << metadata.version << '\n';
+}
+
+void print_source(const Environment& env, const std::string& id, const std::string& field, const std::string& path) {
+    if (const auto node = source_record_node(env, id, field)) {
+        try {
+            const auto& source = env.sources.at(id);
+            std::cout << "source: " << source.path << ':' << node->line.source.line_number << '\n';
+            return;
+        } catch (const std::exception&) {}
+    }
+    const auto node = env[path].get_node();
+    std::cout << "source: " << node->line.source.name << ':' << node->line.source.line_number << '\n';
+}
+
+void explain_nuclide(const Environment& env, const std::string& id) {
+    const std::string root = "nuclear.isotopes[" + id + "]";
+    const Nuclide nuclide = read_nuclide(env, id);
+    const bool daughter_exists = nuclide.stable || nuclide.daughter.empty() || nuclide.daughter == "none"
+        || env["nuclear.isotopes"].has_item(nuclide.daughter);
+
+    std::cout << "Nuclide " << nuclide.id << " — " << nuclide.label << "\n\n"
+              << "Resolved model\n"
+              << "  atomic mass  " << format_quantity(env, root + ".atomic_mass") << '\n'
+              << "  half-life    " << (nuclide.stable ? "stable" : format_quantity(env, root + ".half_life")) << '\n'
+              << "  decay mode   " << nuclide.mode << '\n'
+              << "  daughter     " << (nuclide.daughter.empty() ? "none" : nuclide.daughter) << '\n'
+              << "  branching    " << format_scalar(nuclide.branching * 100.0) << " %\n"
+              << "  Q value      " << format_quantity(env, root + ".decay.energy") << "\n\n"
+              << "Record provenance\n";
+    print_record_provenance(env, id, "  ");
+    std::cout << "\nValidation\n"
+              << "  [ok] isotope_record schema resolved during DIPL parsing\n"
+              << "  [ok] physical units are dimensionally valid\n"
+              << "  [" << (daughter_exists ? "ok" : "missing") << "] daughter "
+              << (nuclide.daughter.empty() ? "none" : nuclide.daughter)
+              << (daughter_exists ? " is resolvable\n" : " is not in the catalogue\n")
+              << "  [" << (nuclide.branching >= 0.0 && nuclide.branching <= 1.0 ? "ok" : "invalid")
+              << "] branching fraction is in [0, 1]\n\n"
+              << "Use --trace " << id << ".half_life to inspect a resolved field.\n";
+}
+
+struct TraceField {
+    std::string_view path;
+    std::string_view schema_path;
+    std::string_view dimension;
+    std::string_view si_unit;
+    enum class Kind { String, Boolean, Quantity } kind;
+};
+
+void trace_nuclide_field(const Environment& env, const std::string& request) {
+    const std::size_t separator = request.find('.');
+    if (separator == std::string::npos || separator == 0 || separator == request.size() - 1)
+        throw std::runtime_error("trace target must use the form ISOTOPE.FIELD (for example U239.half_life)");
+    const std::string id = request.substr(0, separator);
+    const std::string field = request.substr(separator + 1);
+    const std::unordered_map<std::string, TraceField> fields = {
+        {"id", {"id", "id", "identifier", "", TraceField::Kind::String}},
+        {"label", {"label", "label", "text", "", TraceField::Kind::String}},
+        {"atomic_mass", {"atomic_mass", "atomic_mass", "mass / amount", "kg/mol", TraceField::Kind::Quantity}},
+        {"stable", {"stable", "stable", "boolean", "", TraceField::Kind::Boolean}},
+        {"half_life", {"half_life", "half_life", "time", "s", TraceField::Kind::Quantity}},
+        {"decay.daughter", {"decay.daughter", "decay.daughter", "identifier", "", TraceField::Kind::String}},
+        {"decay.branching", {"decay.branching", "decay.branching", "dimensionless", "", TraceField::Kind::Quantity}},
+        {"decay.mode", {"decay.mode", "decay.mode", "text", "", TraceField::Kind::String}},
+        {"decay.energy", {"decay.energy", "decay.energy", "energy", "J", TraceField::Kind::Quantity}},
+    };
+    const auto selected = fields.find(field);
+    if (selected == fields.end())
+        throw std::runtime_error("unsupported trace field '" + field + "'; use --explain " + id + " for the available model");
+    const std::string root = "nuclear.isotopes[" + id + "]";
+    const std::string path = root + "." + std::string(selected->second.path);
+    const auto cursor = env[path];
+    const auto declared_node = source_record_node(env, id, selected->second.path);
+    // Requesting the value verifies that both the isotope and field resolve.
+    std::cout << "Trace " << id << '.' << field << "\n\ndeclared value: " << format_declared_value(declared_node) << "\nresolved value: ";
+    switch (selected->second.kind) {
+        case TraceField::Kind::String: std::cout << cursor.as<std::string>() << '\n'; break;
+        case TraceField::Kind::Boolean: std::cout << (cursor.as<bool>() ? "true" : "false") << '\n'; break;
+        case TraceField::Kind::Quantity:
+            std::cout << (selected->second.si_unit.empty() ? format_scalar(cursor.as<double>()) : format_quantity(env, path)) << '\n';
+            if (!selected->second.si_unit.empty())
+                std::cout << "SI value: " << format_scalar(quantity_as(env, path, std::string(selected->second.si_unit)))
+                          << ' ' << selected->second.si_unit << '\n';
+            break;
+    }
+    std::cout << "dimension: " << selected->second.dimension << '\n';
+    print_source(env, id, field, path);
+    std::cout << "schema: isotope_record." << selected->second.schema_path << '\n'
+              << "provenance: record-level metadata attached to " << id << ".id\n";
+    print_record_provenance(env, id, "  ");
 }
 
 Nuclide read_nuclide(const Environment& env, const std::string& id) {
@@ -390,7 +545,7 @@ void print_nuclide(const Nuclide& n) {
 }
 
 void usage() {
-    std::cout << "Usage: nuclide-atlas [--scenario FILE] [--output FILE] [--data DIR] [--isotope ID] [--list]";
+    std::cout << "Usage: nuclide-atlas [--scenario FILE] [--output FILE] [--data DIR] [--load-environment FILE] [--save-environment FILE] [--isotope ID] [--explain ID] [--trace ID.FIELD] [--list]";
 #if SNT_NUCLEAR_ENABLE_ACTIVATION
     std::cout << " [--activation] [--deuteron-activation]";
 #endif
@@ -404,7 +559,11 @@ int main(int argc, char** argv) {
         fs::path data_dir = SNT_NUCLEAR_DATA_DIR;
         fs::path scenario = SNT_NUCLEAR_DEFAULT_SCENARIO;
         fs::path output;
+        fs::path load_environment;
+        fs::path save_environment;
         std::string inspect;
+        std::string explain;
+        std::string trace;
         bool list = false;
         bool activation = false;
         bool deuteron_activation = false;
@@ -417,7 +576,11 @@ int main(int argc, char** argv) {
             if (arg == "--scenario") scenario = value("--scenario");
             else if (arg == "--output") output = value("--output");
             else if (arg == "--data") data_dir = value("--data");
+            else if (arg == "--load-environment") load_environment = value("--load-environment");
+            else if (arg == "--save-environment") save_environment = value("--save-environment");
             else if (arg == "--isotope") inspect = value("--isotope");
+            else if (arg == "--explain") explain = value("--explain");
+            else if (arg == "--trace") trace = value("--trace");
             else if (arg == "--list") list = true;
 #if SNT_NUCLEAR_ENABLE_ACTIVATION
             else if (arg == "--activation") activation = true;
@@ -430,17 +593,28 @@ int main(int argc, char** argv) {
             else throw std::runtime_error("unknown option: " + arg);
         }
 
-        data_dir = fs::absolute(data_dir);
-        scenario = fs::absolute(scenario);
-        const fs::path original_working_directory = fs::current_path();
-        // DIPL source paths are evaluated by SNT relative to the working directory.
-        // Make the database self-contained even when the executable is launched from build/.
-        fs::current_path(data_dir);
-        snt::dip::DIP dip;
-        dip.add_file(data_dir / "nuclear.dip", {}, true);
-        if (inspect.empty() && !list) dip.add_file(scenario, {}, true);
-        const Environment env = dip.parse();
-        fs::current_path(original_working_directory);
+        Environment env;
+        if (!load_environment.empty()) {
+            env.load(fs::absolute(load_environment));
+        } else {
+            data_dir = fs::absolute(data_dir);
+            scenario = fs::absolute(scenario);
+            const fs::path original_working_directory = fs::current_path();
+            // DIPL source paths are evaluated by SNT relative to the working directory.
+            // Make the database self-contained even when the executable is launched from build/.
+            fs::current_path(data_dir);
+            snt::dip::DIP dip;
+            dip.add_file(data_dir / "nuclear.dip", {}, true);
+            if (inspect.empty() && explain.empty() && trace.empty() && !list) dip.add_file(scenario, {}, true);
+            env = dip.parse();
+            fs::current_path(original_working_directory);
+            materialize_record_provenance(env);
+        }
+        if (!save_environment.empty()) {
+            const fs::path snapshot = fs::absolute(save_environment);
+            env.save(snapshot);
+            std::cout << "Saved evaluated DIPL environment to " << snapshot << '\n';
+        }
         if (list) {
             std::vector<std::string> ids;
             for (const auto& [id, _] : env["nuclear.isotopes"].items()) ids.push_back(id);
@@ -450,6 +624,8 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (!inspect.empty()) { print_nuclide(read_nuclide(env, inspect)); return 0; }
+        if (!explain.empty()) { explain_nuclide(env, explain); return 0; }
+        if (!trace.empty()) { trace_nuclide_field(env, trace); return 0; }
 
 #if SNT_NUCLEAR_ENABLE_ACTIVATION
         if (activation && deuteron_activation) throw std::runtime_error("choose either --activation or --deuteron-activation");

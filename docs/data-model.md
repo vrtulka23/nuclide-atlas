@@ -68,6 +68,32 @@ The project gets the following capabilities from DIPL/PUQ rather than reimplemen
 
 Provenance is attached to the `id` value through DIPL metadata properties—not model data nodes—using `?authors`, `?title`, `?journal`, `?year`, `?doi`, `?url`, and `?version`. That keeps citations available to DIPL-aware consumers while ensuring they never enter the solver's parameter namespace.
 
+## Inspecting resolved data and provenance
+
+The executable exposes the resolved DIPL model rather than treating the catalogue as opaque input:
+
+```bash
+nuclide-atlas --explain U239
+nuclide-atlas --trace U239.half_life
+```
+
+`--explain` shows the resolved isotope fields, record provenance, and the schema, dimensional, daughter-reference, and branching checks that succeeded during DIPL parsing. `--trace` accepts these fields: `id`, `label`, `atomic_mass`, `stable`, `half_life`, `decay.daughter`, `decay.branching`, `decay.mode`, and `decay.energy`.
+
+A trace shows the declared source value and unit, resolved value, SI conversion where applicable, physical dimension, source file and line, schema path, and provenance. For example, `U239.half_life` traces the declared `23.45 min` to the resolved `1407 s` value in `isotopes/U239.dip`.
+
+The seed catalogue currently attaches citation metadata to each record's `id`, so every trace reports the record-level citation explicitly. A future field-level provenance extension can add separate citations where mass, half-life, and decay data originate from different evaluations.
+
+## DIPH5 persistence
+
+With SciNumTools v0.8.1 or newer, a fully evaluated catalogue and scenario can be saved in the HDF5-based DIPH5 format:
+
+```bash
+nuclide-atlas --save-environment build/u238-age.diph5
+nuclide-atlas --load-environment build/u238-age.diph5 --trace U239.half_life
+```
+
+This stores the resolved DIPL environment—values, dimensions, hierarchy, validation settings, collections, and node-level provenance—not the original DIPL program or the calculated inventory CSV. Before saving, Nuclide Atlas materializes each source record’s citation metadata onto its resolved `id`, so loaded snapshots retain citations for `--explain` and `--trace`. It is therefore useful for reproducible handoff to HDF5-aware scientific tools and later inspection. Loading does not restore the original source registry.
+
 The initial seed is compiled from rounded commonly published evaluated values to keep DIPL files readable. It is a demonstrator dataset, not a claimed replacement for ENSDF/NUBASE. A production contribution should attach the precise evaluated source, evaluator/version, retrieval date, and any branch-selection rationale using these metadata properties.
 
 Each isotope record still supports one explicit radioactive daughter branch. The activation engine can add one scenario-defined neutron-capture feed edge to that decay network. The `branching` value preserves loss to omitted radioactive channels in an explicit absorbing balance state (`untracked_loss_atoms`), but does not model their inventories. Full decay branching and multiple reaction channels are natural next schema-and-solver extensions.

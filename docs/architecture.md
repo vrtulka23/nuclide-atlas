@@ -15,6 +15,10 @@ activation scenario.dip ── DIPL activation_simulation ── coupled rate ma
 
 At run time `src/main.cpp` reads quantities through a DIPL cursor, reconstructs a PUQ quantity from its numeric value and unit metadata, and explicitly converts it to the solver’s base unit. As a result, a data mistake such as assigning a mass to `half_life` is caught as a dimensional incompatibility before it can become a numerical result.
 
+The same resolved environment powers `--explain` and `--trace`. These read-only commands cross-reference an imported record with its original `$source` node, preserving the declared literal, source line, and record-level DIPL metadata alongside the resolved value used by the solver.
+
+With SciNumTools v0.8.1, `--save-environment` writes this evaluated environment as DIPH5 (HDF5) and `--load-environment` restores it. This is an input/provenance persistence boundary: inventory results remain CSV, while DIPH5 captures the resolved scientific model for reuse or exchange with HDF5-aware software.
+
 The solver makes decay constants from `ln(2)/half_life` and evaluates the serial-chain Bateman solution. Each snapshot is exact for the supplied one-daughter chain; the reporting grid therefore has no effect on stiffness or stability.
 
 At configure time, SNT's `snt_dip_get()` evaluates `dip/build.dip`. This is a real CMake/DIPL integration: build policy is not duplicated in a second config syntax.

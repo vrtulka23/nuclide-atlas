@@ -47,7 +47,7 @@ cmake/
 YAML could store the same numbers, but it would leave Nuclide Atlas to build its own parser, unit converter, schema validator, reference resolver, provenance convention, and CMake bridge. SciNumTools3 gives this project those scientific semantics in one shared layer:
 
 - `4.5 Gyr`, `100 ng`, `g/mol`, `MeV`, and `Bq` are physical quantities, not strings that the solver must interpret ad hoc.
-- `data/nuclear.dip` owns a reusable `nuclear_simulation` schema, so DIPL rejects invalid scenario values before C++ runs—such as a non-positive duration, a mass supplied where a time is required, an invalid isotope ID, or `minimum_time >= duration`.
+- `data/nuclear.dip` owns `isotope_record` and `nuclear_simulation` schemas. The former validates every resolved isotope used by the solver (IDs, positive molar masses, non-negative half-lives and decay energies, branching fractions, and supported modes); the latter rejects invalid scenario values before C++ runs.
 - Each isotope lives in an independently reviewable DIPL source and is imported into a coherent database; adding data does not require changing the solver.
 - The same resolved data model is consumable from C++, Python, the SNT CLI, and CMake. `cmake/build.dip`, for example, controls build policy through `snt_dip_get()`.
 - Citation metadata is attached to values with DIPL `?doi`, `?authors`, and related properties rather than being an unstructured comment beside a number.

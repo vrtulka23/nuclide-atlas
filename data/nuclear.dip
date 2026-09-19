@@ -21,6 +21,29 @@ $source Pu239 = "isotopes/Pu239.dip"
 $source U235 = "isotopes/U235.dip"
 $source Pb207 = "isotopes/Pb207.dip"
 
+# Contract applied to every isotope in the resolved catalogue.  The small source
+# files remain independently maintainable, while this registry is the quality
+# gate for the exact fields that the solver consumes.
+$schema isotope_record
+  id str
+    !format "[A-Z][a-z]?[0-9]+m?"
+  label str
+    !format ".{3,80}"
+  atomic_mass float g/mol
+    !condition ({.} > 0 g/mol)
+  stable bool
+  half_life float s
+    !condition ({.} >= 0 s)
+  decay
+    daughter str
+      !format "(none|[A-Z][a-z]?[0-9]+m?)"
+    branching float
+      !condition ({.} >= 0 && {.} <= 1)
+    mode str
+      !options ["alpha", "beta-", "stable"]
+    energy float MeV
+      !condition ({.} >= 0 MeV)
+
 # Shared contract for every calculation request. Scenarios only assign values;
 # their types, units, constraints, and allowed grid choices live here.
 $schema nuclear_simulation
@@ -50,21 +73,183 @@ nuclear
     U {uranium?element.}
     Pb {lead?element.}
   isotopes
-    U238 {U238?isotope.}
-    Th234 {Th234?isotope.}
-    Pa234m {Pa234m?isotope.}
-    U234 {U234?isotope.}
-    Th230 {Th230?isotope.}
-    Ra226 {Ra226?isotope.}
-    Rn222 {Rn222?isotope.}
-    Po218 {Po218?isotope.}
-    Pb214 {Pb214?isotope.}
-    Bi214 {Bi214?isotope.}
-    Po214 {Po214?isotope.}
-    Pb210 {Pb210?isotope.}
-    Bi210 {Bi210?isotope.}
-    Po210 {Po210?isotope.}
-    Pb206 {Pb206?isotope.}
-    Pu239 {Pu239?isotope.}
-    U235 {U235?isotope.}
-    Pb207 {Pb207?isotope.}
+    U238 : isotope_record
+      id = {U238?isotope.id}
+      label = {U238?isotope.label}
+      atomic_mass = {U238?isotope.atomic_mass} g/mol
+      stable = {U238?isotope.stable}
+      half_life = {U238?isotope.half_life} s
+      decay.daughter = {U238?isotope.decay.daughter}
+      decay.branching = {U238?isotope.decay.branching}
+      decay.mode = {U238?isotope.decay.mode}
+      decay.energy = {U238?isotope.decay.energy} MeV
+    Th234 : isotope_record
+      id = {Th234?isotope.id}
+      label = {Th234?isotope.label}
+      atomic_mass = {Th234?isotope.atomic_mass} g/mol
+      stable = {Th234?isotope.stable}
+      half_life = {Th234?isotope.half_life} s
+      decay.daughter = {Th234?isotope.decay.daughter}
+      decay.branching = {Th234?isotope.decay.branching}
+      decay.mode = {Th234?isotope.decay.mode}
+      decay.energy = {Th234?isotope.decay.energy} MeV
+    Pa234m : isotope_record
+      id = {Pa234m?isotope.id}
+      label = {Pa234m?isotope.label}
+      atomic_mass = {Pa234m?isotope.atomic_mass} g/mol
+      stable = {Pa234m?isotope.stable}
+      half_life = {Pa234m?isotope.half_life} s
+      decay.daughter = {Pa234m?isotope.decay.daughter}
+      decay.branching = {Pa234m?isotope.decay.branching}
+      decay.mode = {Pa234m?isotope.decay.mode}
+      decay.energy = {Pa234m?isotope.decay.energy} MeV
+    U234 : isotope_record
+      id = {U234?isotope.id}
+      label = {U234?isotope.label}
+      atomic_mass = {U234?isotope.atomic_mass} g/mol
+      stable = {U234?isotope.stable}
+      half_life = {U234?isotope.half_life} s
+      decay.daughter = {U234?isotope.decay.daughter}
+      decay.branching = {U234?isotope.decay.branching}
+      decay.mode = {U234?isotope.decay.mode}
+      decay.energy = {U234?isotope.decay.energy} MeV
+    Th230 : isotope_record
+      id = {Th230?isotope.id}
+      label = {Th230?isotope.label}
+      atomic_mass = {Th230?isotope.atomic_mass} g/mol
+      stable = {Th230?isotope.stable}
+      half_life = {Th230?isotope.half_life} s
+      decay.daughter = {Th230?isotope.decay.daughter}
+      decay.branching = {Th230?isotope.decay.branching}
+      decay.mode = {Th230?isotope.decay.mode}
+      decay.energy = {Th230?isotope.decay.energy} MeV
+    Ra226 : isotope_record
+      id = {Ra226?isotope.id}
+      label = {Ra226?isotope.label}
+      atomic_mass = {Ra226?isotope.atomic_mass} g/mol
+      stable = {Ra226?isotope.stable}
+      half_life = {Ra226?isotope.half_life} s
+      decay.daughter = {Ra226?isotope.decay.daughter}
+      decay.branching = {Ra226?isotope.decay.branching}
+      decay.mode = {Ra226?isotope.decay.mode}
+      decay.energy = {Ra226?isotope.decay.energy} MeV
+    Rn222 : isotope_record
+      id = {Rn222?isotope.id}
+      label = {Rn222?isotope.label}
+      atomic_mass = {Rn222?isotope.atomic_mass} g/mol
+      stable = {Rn222?isotope.stable}
+      half_life = {Rn222?isotope.half_life} s
+      decay.daughter = {Rn222?isotope.decay.daughter}
+      decay.branching = {Rn222?isotope.decay.branching}
+      decay.mode = {Rn222?isotope.decay.mode}
+      decay.energy = {Rn222?isotope.decay.energy} MeV
+    Po218 : isotope_record
+      id = {Po218?isotope.id}
+      label = {Po218?isotope.label}
+      atomic_mass = {Po218?isotope.atomic_mass} g/mol
+      stable = {Po218?isotope.stable}
+      half_life = {Po218?isotope.half_life} s
+      decay.daughter = {Po218?isotope.decay.daughter}
+      decay.branching = {Po218?isotope.decay.branching}
+      decay.mode = {Po218?isotope.decay.mode}
+      decay.energy = {Po218?isotope.decay.energy} MeV
+    Pb214 : isotope_record
+      id = {Pb214?isotope.id}
+      label = {Pb214?isotope.label}
+      atomic_mass = {Pb214?isotope.atomic_mass} g/mol
+      stable = {Pb214?isotope.stable}
+      half_life = {Pb214?isotope.half_life} s
+      decay.daughter = {Pb214?isotope.decay.daughter}
+      decay.branching = {Pb214?isotope.decay.branching}
+      decay.mode = {Pb214?isotope.decay.mode}
+      decay.energy = {Pb214?isotope.decay.energy} MeV
+    Bi214 : isotope_record
+      id = {Bi214?isotope.id}
+      label = {Bi214?isotope.label}
+      atomic_mass = {Bi214?isotope.atomic_mass} g/mol
+      stable = {Bi214?isotope.stable}
+      half_life = {Bi214?isotope.half_life} s
+      decay.daughter = {Bi214?isotope.decay.daughter}
+      decay.branching = {Bi214?isotope.decay.branching}
+      decay.mode = {Bi214?isotope.decay.mode}
+      decay.energy = {Bi214?isotope.decay.energy} MeV
+    Po214 : isotope_record
+      id = {Po214?isotope.id}
+      label = {Po214?isotope.label}
+      atomic_mass = {Po214?isotope.atomic_mass} g/mol
+      stable = {Po214?isotope.stable}
+      half_life = {Po214?isotope.half_life} s
+      decay.daughter = {Po214?isotope.decay.daughter}
+      decay.branching = {Po214?isotope.decay.branching}
+      decay.mode = {Po214?isotope.decay.mode}
+      decay.energy = {Po214?isotope.decay.energy} MeV
+    Pb210 : isotope_record
+      id = {Pb210?isotope.id}
+      label = {Pb210?isotope.label}
+      atomic_mass = {Pb210?isotope.atomic_mass} g/mol
+      stable = {Pb210?isotope.stable}
+      half_life = {Pb210?isotope.half_life} s
+      decay.daughter = {Pb210?isotope.decay.daughter}
+      decay.branching = {Pb210?isotope.decay.branching}
+      decay.mode = {Pb210?isotope.decay.mode}
+      decay.energy = {Pb210?isotope.decay.energy} MeV
+    Bi210 : isotope_record
+      id = {Bi210?isotope.id}
+      label = {Bi210?isotope.label}
+      atomic_mass = {Bi210?isotope.atomic_mass} g/mol
+      stable = {Bi210?isotope.stable}
+      half_life = {Bi210?isotope.half_life} s
+      decay.daughter = {Bi210?isotope.decay.daughter}
+      decay.branching = {Bi210?isotope.decay.branching}
+      decay.mode = {Bi210?isotope.decay.mode}
+      decay.energy = {Bi210?isotope.decay.energy} MeV
+    Po210 : isotope_record
+      id = {Po210?isotope.id}
+      label = {Po210?isotope.label}
+      atomic_mass = {Po210?isotope.atomic_mass} g/mol
+      stable = {Po210?isotope.stable}
+      half_life = {Po210?isotope.half_life} s
+      decay.daughter = {Po210?isotope.decay.daughter}
+      decay.branching = {Po210?isotope.decay.branching}
+      decay.mode = {Po210?isotope.decay.mode}
+      decay.energy = {Po210?isotope.decay.energy} MeV
+    Pb206 : isotope_record
+      id = {Pb206?isotope.id}
+      label = {Pb206?isotope.label}
+      atomic_mass = {Pb206?isotope.atomic_mass} g/mol
+      stable = {Pb206?isotope.stable}
+      half_life = {Pb206?isotope.half_life} s
+      decay.daughter = {Pb206?isotope.decay.daughter}
+      decay.branching = {Pb206?isotope.decay.branching}
+      decay.mode = {Pb206?isotope.decay.mode}
+      decay.energy = {Pb206?isotope.decay.energy} MeV
+    Pu239 : isotope_record
+      id = {Pu239?isotope.id}
+      label = {Pu239?isotope.label}
+      atomic_mass = {Pu239?isotope.atomic_mass} g/mol
+      stable = {Pu239?isotope.stable}
+      half_life = {Pu239?isotope.half_life} s
+      decay.daughter = {Pu239?isotope.decay.daughter}
+      decay.branching = {Pu239?isotope.decay.branching}
+      decay.mode = {Pu239?isotope.decay.mode}
+      decay.energy = {Pu239?isotope.decay.energy} MeV
+    U235 : isotope_record
+      id = {U235?isotope.id}
+      label = {U235?isotope.label}
+      atomic_mass = {U235?isotope.atomic_mass} g/mol
+      stable = {U235?isotope.stable}
+      half_life = {U235?isotope.half_life} s
+      decay.daughter = {U235?isotope.decay.daughter}
+      decay.branching = {U235?isotope.decay.branching}
+      decay.mode = {U235?isotope.decay.mode}
+      decay.energy = {U235?isotope.decay.energy} MeV
+    Pb207 : isotope_record
+      id = {Pb207?isotope.id}
+      label = {Pb207?isotope.label}
+      atomic_mass = {Pb207?isotope.atomic_mass} g/mol
+      stable = {Pb207?isotope.stable}
+      half_life = {Pb207?isotope.half_life} s
+      decay.daughter = {Pb207?isotope.decay.daughter}
+      decay.branching = {Pb207?isotope.decay.branching}
+      decay.mode = {Pb207?isotope.decay.mode}
+      decay.energy = {Pb207?isotope.decay.energy} MeV

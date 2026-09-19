@@ -1,0 +1,14 @@
+constants
+  # Exact SI value (2019 definition); used to turn molar mass into atom count.
+  avogadro float = 6.02214076e23 1/mol
+    ?descr "Exact SI value used to convert molar mass into atom count."
+    ?title "CODATA recommended values of the fundamental constants"
+    ?url "https://physics.nist.gov/cuu/Constants/"
+    ?version "CODATA 2022; accessed 2026-09-19"
+  seconds_per_year float = 31557600 s
+  electron
+    mass float = 9.1093837139e-31 kg
+  proton
+    mass float = 1.67262192595e-27 kg
+  c float = 299792458 m/s
+  h float = 6.62607015e-34 J*s

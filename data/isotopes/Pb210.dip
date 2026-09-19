@@ -1,0 +1,21 @@
+isotope
+  id str = "Pb210"
+    ?descr "Rounded seed record; decay mode and energy cross-checked against IAEA LiveChart/ENSDF."
+    ?authors "F. G. Kondev, M. Wang, W. J. Huang, S. Naimi, G. Audi"
+    ?title "The NUBASE2020 evaluation of nuclear physics properties"
+    ?journal "Chinese Physics C"
+    ?year 2021
+    ?volume 45
+    ?pages "030001"
+    ?doi "10.1088/1674-1137/abddae"
+    ?url "https://www-nds.iaea.org/amdc/ame2020/NUBASE2020.pdf"
+    ?version "NUBASE2020; accessed 2026-09-19; one-daughter seed model"
+  label str = "lead-210"
+  atomic_mass float = 209.9841889 g/mol
+  stable bool = false
+  half_life float = 22.2 yr
+  decay
+    daughter str = "Bi210"
+    branching float = 1.0
+    mode str = "beta-"
+    energy float = 0.0635 MeV

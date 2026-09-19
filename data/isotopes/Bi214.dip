@@ -1,0 +1,21 @@
+isotope
+  id str = "Bi214"
+    ?descr "Rounded seed record; decay mode and energy cross-checked against IAEA LiveChart/ENSDF."
+    ?authors "F. G. Kondev, M. Wang, W. J. Huang, S. Naimi, G. Audi"
+    ?title "The NUBASE2020 evaluation of nuclear physics properties"
+    ?journal "Chinese Physics C"
+    ?year 2021
+    ?volume 45
+    ?pages "030001"
+    ?doi "10.1088/1674-1137/abddae"
+    ?url "https://www-nds.iaea.org/amdc/ame2020/NUBASE2020.pdf"
+    ?version "NUBASE2020; accessed 2026-09-19; one-daughter seed model"
+  label str = "bismuth-214"
+  atomic_mass float = 213.998712 g/mol
+  stable bool = false
+  half_life float = 19.9 min
+  decay
+    daughter str = "Po214"
+    branching float = 0.99979
+    mode str = "beta-"
+    energy float = 3.272 MeV

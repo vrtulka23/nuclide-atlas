@@ -1,0 +1,47 @@
+# The database is composed from independently maintainable DIPL sources.
+$source constants = "constants.dip"
+$source uranium = "elements/U.dip"
+$source lead = "elements/Pb.dip"
+$source U238 = "isotopes/U238.dip"
+$source Th234 = "isotopes/Th234.dip"
+$source Pa234m = "isotopes/Pa234m.dip"
+$source U234 = "isotopes/U234.dip"
+$source Th230 = "isotopes/Th230.dip"
+$source Ra226 = "isotopes/Ra226.dip"
+$source Rn222 = "isotopes/Rn222.dip"
+$source Po218 = "isotopes/Po218.dip"
+$source Pb214 = "isotopes/Pb214.dip"
+$source Bi214 = "isotopes/Bi214.dip"
+$source Po214 = "isotopes/Po214.dip"
+$source Pb210 = "isotopes/Pb210.dip"
+$source Bi210 = "isotopes/Bi210.dip"
+$source Po210 = "isotopes/Po210.dip"
+$source Pb206 = "isotopes/Pb206.dip"
+$source Pu239 = "isotopes/Pu239.dip"
+$source U235 = "isotopes/U235.dip"
+$source Pb207 = "isotopes/Pb207.dip"
+
+nuclear
+  constants {constants?constants.}
+  elements
+    U {uranium?element.}
+    Pb {lead?element.}
+  isotopes
+    U238 {U238?isotope.}
+    Th234 {Th234?isotope.}
+    Pa234m {Pa234m?isotope.}
+    U234 {U234?isotope.}
+    Th230 {Th230?isotope.}
+    Ra226 {Ra226?isotope.}
+    Rn222 {Rn222?isotope.}
+    Po218 {Po218?isotope.}
+    Pb214 {Pb214?isotope.}
+    Bi214 {Bi214?isotope.}
+    Po214 {Po214?isotope.}
+    Pb210 {Pb210?isotope.}
+    Bi210 {Bi210?isotope.}
+    Po210 {Po210?isotope.}
+    Pb206 {Pb206?isotope.}
+    Pu239 {Pu239?isotope.}
+    U235 {U235?isotope.}
+    Pb207 {Pb207?isotope.}

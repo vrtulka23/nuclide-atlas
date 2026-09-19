@@ -1,0 +1,21 @@
+isotope
+  id str = "Pu239"
+    ?descr "Rounded seed record; this demonstration uses a deliberately compressed Pu239 daughter path."
+    ?authors "F. G. Kondev, M. Wang, W. J. Huang, S. Naimi, G. Audi"
+    ?title "The NUBASE2020 evaluation of nuclear physics properties"
+    ?journal "Chinese Physics C"
+    ?year 2021
+    ?volume 45
+    ?pages "030001"
+    ?doi "10.1088/1674-1137/abddae"
+    ?url "https://www-nds.iaea.org/amdc/ame2020/NUBASE2020.pdf"
+    ?version "NUBASE2020; accessed 2026-09-19; compressed seed model"
+  label str = "plutonium-239"
+  atomic_mass float = 239.0521636 g/mol
+  stable bool = false
+  half_life float = 24110 yr
+  decay
+    daughter str = "U235"
+    branching float = 1.0
+    mode str = "alpha"
+    energy float = 5.245 MeV

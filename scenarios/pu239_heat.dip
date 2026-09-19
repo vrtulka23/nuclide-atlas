@@ -1,0 +1,17 @@
+simulation
+  title str = "Plutonium-239 radiological inventory"
+  sample
+    isotope str = "Pu239"
+    mass float = 100 ng
+      !condition ({.} > 0 g)
+  duration float = 30 yr
+    !condition ({.} > 0 s)
+  points int = 500
+    !condition ({.} >= 2)
+  time_grid str = "logarithmic"
+    !options ["linear", "logarithmic"]
+  minimum_time float = 1 us
+    !condition ({.} > 0 s)
+  output
+    csv str = "pu239_inventory.csv"
+    include_activity bool = true

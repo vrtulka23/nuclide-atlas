@@ -1,0 +1,8 @@
+element
+  symbol str = "U"
+  name str = "uranium"
+  atomic_number int = 92
+  standard_atomic_weight float = 238.02891 g/mol
+    ?title "CIAAW standard atomic weights"
+    ?url "https://ciaaw.org/atomic-weights.htm"
+    ?version "Reference element metadata; accessed 2026-09-19"

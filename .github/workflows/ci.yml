@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libhdf5-dev
+      - name: Build and install SciNumTools3 master
+        run: |
+          git clone --depth 1 https://github.com/vrtulka23/scinumtools3.git /tmp/scinumtools3
+          cmake -S /tmp/scinumtools3 -B /tmp/scinumtools3/build -G Ninja -DCMAKE_BUILD_TYPE=Release -DENABLE_UNIT_TESTS=OFF -DENABLE_BINDING_PYTHON=OFF -DENABLE_BINDING_C=OFF -DENABLE_EXEC_EXAMPLES=OFF -DENABLE_EXEC_APPS_DMAP=OFF
+          cmake --build /tmp/scinumtools3/build --parallel
+          cmake --install /tmp/scinumtools3/build --prefix "$HOME/.local"
+      - name: Configure and run the U-238 example
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_PREFIX_PATH="$HOME/.local"
+          cmake --build build
+          ./build/nuclide-atlas --output build/inventory.csv
+          ctest --test-dir build --output-on-failure
+      - uses: actions/upload-artifact@v4
+        with:
+          name: inventory-csv
+          path: build/inventory.csv

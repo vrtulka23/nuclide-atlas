@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you use Nuclide Atlas, please cite the software and the evaluated nuclear data source used for your run."
+title: "Nuclide Atlas"
+abstract: "A unit-aware DIPL nuclear isotope database and decay-chain calculator."
+type: software
+license: MIT
+authors:
+  - name: "Nuclide Atlas contributors"
+repository-code: "https://github.com/vrtulka23/nuclide-atlas"

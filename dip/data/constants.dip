@@ -6,6 +6,14 @@ constants
     ?url "https://physics.nist.gov/cuu/Constants/"
     ?version "CODATA 2022; accessed 2026-09-19"
   seconds_per_year float = 31557600 s
+    ?descr "Julian year used in all CSV time conversions."
+    ?title "IAU System of Astronomical Constants"
+    ?version "Julian year = 365.25 days exactly"
+  joules_per_mev float = 1.602176634e-13 J/MeV
+    ?descr "Exact conversion from megaelectronvolts to joules."
+    ?title "CODATA recommended values of the fundamental constants"
+    ?url "https://physics.nist.gov/cuu/Constants/"
+    ?version "2019 SI definition; accessed 2026-09-19"
   electron
     mass float = 9.1093837139e-31 kg
   proton

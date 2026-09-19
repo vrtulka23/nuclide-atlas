@@ -15,7 +15,7 @@ isotope
     energy float = 4.26975 MeV
 ```
 
-All numerical fields have a unit. `data/nuclear.dip` imports a file per record and is the one explicit registry that determines which records are visible to a scenario.
+All numerical fields have a unit. `dip/data/nuclear.dip` imports a file per record and is the one explicit registry that determines which records are visible to a scenario.
 
 ## Isotope-record schema
 
@@ -25,7 +25,7 @@ The shared contract checks isotope and daughter identifier formats, labels, posi
 
 ## Simulation schema
 
-`data/nuclear.dip` also declares the reusable `nuclear_simulation` schema. It defines the input contract once: a bounded title, sample-isotope format, mass in mass dimensions, duration and minimum time in time dimensions, a `minimum_time < duration` cross-field rule, a 2-to-1,000,000 reporting-point limit, supported time grids, and a CSV filename format. A scenario is therefore only an assignment layer:
+`dip/data/nuclear.dip` also declares the reusable `nuclear_simulation` schema. It defines the input contract once: a bounded title, sample-isotope format, mass in mass dimensions, duration and minimum time in time dimensions, a `minimum_time < duration` cross-field rule, a 2-to-1,000,000 reporting-point limit, supported time grids, CSV filename format, and flags for activity and Q-value-power columns. A scenario is therefore only an assignment layer:
 
 ```dip
 simulation : nuclear_simulation
@@ -36,6 +36,24 @@ simulation : nuclear_simulation
 ```
 
 This is more than a template: DIPL applies the schema while parsing and rejects incompatible units or invalid choices before the C++ solver sees them.
+
+`constants.dip` is equally part of the runtime contract: Avogadro’s constant sets the atom count, `seconds_per_year` sets CSV year conversion, and `joules_per_mev` converts decay Q values to joules. The C++ solver reads and unit-converts these values through PUQ; it does not maintain duplicate numerical literals.
+
+## Activation-simulation schema
+
+`activation_simulation` adds a separately typed request for a one-group irradiation followed by cooldown. It validates the sample isotope/mass, irradiation duration and reporting points, neutron flux in `1/(cm2*s)`, capture target/product identifiers, microscopic cross section in `cm2`, cooldown duration/points, and a CSV output name. The U-238 example is concise because units and bounds live centrally:
+
+```dip
+activation : activation_simulation
+  sample.isotope = "U238"
+  sample.mass = 1 g
+  irradiation.neutron_flux = 1e14 1/(cm2*s)
+  irradiation.capture.target = "U238"
+  irradiation.capture.product = "U239"
+  irradiation.capture.cross_section = 2.68e-24 cm2
+```
+
+This showcases the same SNT contract used by the decay model: a malformed unit or an invalid rate input is rejected by DIPL/PUQ before the C++ rate matrix is assembled. The cross section is intentionally scenario data, so its spectrum dependence is explicit and reviewable rather than hidden in solver code.
 
 ## DIPL features used without custom infrastructure
 
@@ -52,4 +70,4 @@ Provenance is attached to the `id` value through DIPL metadata properties—not 
 
 The initial seed is compiled from rounded commonly published evaluated values to keep DIPL files readable. It is a demonstrator dataset, not a claimed replacement for ENSDF/NUBASE. A production contribution should attach the precise evaluated source, evaluator/version, retrieval date, and any branch-selection rationale using these metadata properties.
 
-The current solver follows one daughter branch per isotope record. The `branching` value preserves loss to omitted channels, but does not model their inventories. Full branching support is a natural next schema-and-solver extension.
+Each isotope record still supports one explicit radioactive daughter branch. The activation engine can add one scenario-defined neutron-capture feed edge to that decay network. The `branching` value preserves loss to omitted radioactive channels in an explicit absorbing balance state (`untracked_loss_atoms`), but does not model their inventories. Full decay branching and multiple reaction channels are natural next schema-and-solver extensions.

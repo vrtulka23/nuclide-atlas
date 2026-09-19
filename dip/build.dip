@@ -1,0 +1,8 @@
+build
+  cxx_standard int = 20
+    !condition ({.} >= 20)
+  default_scenario str = "scenarios/u238_age.dip"
+  enable_plot_target bool = true
+  # Compile the one-group neutron-activation solver and its CLI workflow.
+  # Keeping this in DIPL makes the capability reproducible in CMake builds.
+  enable_activation bool = true

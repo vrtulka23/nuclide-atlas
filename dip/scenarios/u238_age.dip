@@ -9,3 +9,4 @@ simulation : nuclear_simulation
   minimum_time = 1 us
   output.csv = "inventory.csv"
   output.include_activity = true
+  output.include_q_power = true

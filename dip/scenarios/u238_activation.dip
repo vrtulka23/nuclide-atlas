@@ -1,0 +1,18 @@
+# A one-group, thermal-spectrum demonstration.  The 2.68 barn capture value is
+# a spectrum-specific, illustrative thermal cross section; do not reuse it for
+# a different spectrum without replacing it with evaluated group constants.
+activation : activation_simulation
+  title = "U-238 activation to plutonium-239: 30-day irradiation and 2-year cooldown"
+  sample.isotope = "U238"
+  sample.mass = 1 g
+  irradiation.duration = 30 day
+  irradiation.points = 301
+  irradiation.neutron_flux = 1e14 1/(cm2*s)
+  irradiation.capture.target = "U238"
+  irradiation.capture.product = "U239"
+  irradiation.capture.cross_section = 2.68e-24 cm2
+  cooldown.duration = 2 yr
+  cooldown.points = 401
+  output.csv = "activation.csv"
+  output.include_activity = true
+  output.include_q_power = true

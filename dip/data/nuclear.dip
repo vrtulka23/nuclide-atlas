@@ -3,6 +3,8 @@ $source constants = "constants.dip"
 $source uranium = "elements/U.dip"
 $source lead = "elements/Pb.dip"
 $source U238 = "isotopes/U238.dip"
+$source U239 = "isotopes/U239.dip"
+$source Np239 = "isotopes/Np239.dip"
 $source Th234 = "isotopes/Th234.dip"
 $source Pa234m = "isotopes/Pa234m.dip"
 $source U234 = "isotopes/U234.dip"
@@ -66,6 +68,44 @@ $schema nuclear_simulation
     csv str
       !format "[A-Za-z0-9_./-]+[.]csv"
     include_activity bool
+    include_q_power bool
+
+# One-group activation model.  A capture reaction is applied during irradiation;
+# natural decay remains active during both irradiation and cooldown.  The
+# simulation intentionally keeps reaction spectra out of scope: the supplied
+# flux and cross section must already be spectrum-averaged and self-consistent.
+$schema activation_simulation
+  title str
+    !format ".{3,160}"
+  sample
+    isotope str
+      !format "[A-Z][a-z]?[0-9]+m?"
+    mass float g
+      !condition ({.} > 0 g)
+  irradiation
+    duration float s
+      !condition ({.} > 0 s)
+    points int
+      !condition ({.} >= 2 && {.} <= 100000)
+    neutron_flux float 1/(cm2*s)
+      !condition ({.} > 0 1/(cm2*s))
+    capture
+      target str
+        !format "[A-Z][a-z]?[0-9]+m?"
+      product str
+        !format "[A-Z][a-z]?[0-9]+m?"
+      cross_section float cm2
+        !condition ({.} > 0 cm2)
+  cooldown
+    duration float s
+      !condition ({.} >= 0 s)
+    points int
+      !condition ({.} >= 2 && {.} <= 100000)
+  output
+    csv str
+      !format "[A-Za-z0-9_./-]+[.]csv"
+    include_activity bool
+    include_q_power bool
 
 nuclear
   constants {constants?constants.}
@@ -77,6 +117,10 @@ nuclear
   isotopes map : isotope_record
   isotopes[U238]
     {U238?isotope.}
+  isotopes[U239]
+    {U239?isotope.}
+  isotopes[Np239]
+    {Np239?isotope.}
   isotopes[Th234]
     {Th234?isotope.}
   isotopes[Pa234m]

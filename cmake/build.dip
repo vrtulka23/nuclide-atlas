@@ -1,4 +1,0 @@
-build
-  cxx_standard int = 20
-    !condition ({.} >= 20)
-  enable_plot_target bool = true

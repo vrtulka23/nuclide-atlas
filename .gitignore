@@ -3,5 +3,6 @@ out/
 *.csv
 *.png
 !docs/assets/u238-inventory.png
+!docs/assets/activation-dashboard.png
 __pycache__/
 .venv/

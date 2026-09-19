@@ -10,3 +10,7 @@ simulation : nuclear_simulation
   output.csv = "inventory.csv"
   output.include_activity = true
   output.include_q_power = true
+  plot.dashboard_title = "U-238 decay-chain inventory"
+  plot.dpi = 180
+  plot.annotate_cooldown = true
+  plot.show_cumulative_yield = false

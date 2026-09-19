@@ -25,7 +25,8 @@ To retain this dashboard alongside the ordinary decay dashboard, use distinct na
   --scenario dip/scenarios/u238_activation.dip \
   --output build/u238-activation.csv
 .venv/bin/python python/plot_inventory.py \
-  build/u238-activation.csv build/u238-activation.png
+  build/u238-activation.csv build/u238-activation.png \
+  --scenario dip/scenarios/u238_activation.dip --data-dir dip/data
 ```
 
 If `build.enable_activation` is false, `--activation` is rejected and the matrix solver is not compiled. Edit `dip/build.dip` and rerun `./setup.sh -b` to change the build capability.
@@ -110,4 +111,4 @@ deuteron_activation : deuteron_activation_simulation
 
 The supported labels are `d,p`, `d,n`, and `d,alpha`; each denotes the emitted particle in `target(d,particle)product` notation. The target-to-product edge is a residual-inventory model, not a transport simulation of emitted particles. Its rate is `deuteron_flux × cross_section`, and the output column is `deuteron_reactions_per_s`.
 
-The model is appropriate for transparent, effective-rate demonstrations when the supplied cross section has already been averaged over the actual incident-energy distribution and target depth. It does not calculate the energy dependence of a deuteron reaction, beam slowing or straggling, charged-particle transport, angular distributions, heating, or several competing channels. The included H-2(d,p)H-3 cross section is illustrative only, not evaluated data.
+The model is appropriate for transparent, effective-rate demonstrations when the supplied cross section has already been averaged over the actual incident-energy distribution and target depth. The dashboard adds a cumulative-yield panel by trapezoidally integrating `deuteron_reactions_per_s`, alongside the instantaneous reaction-rate panel. It does not calculate the energy dependence of a deuteron reaction, beam slowing or straggling, charged-particle transport, angular distributions, heating, or several competing channels. The included H-2(d,p)H-3 cross section is illustrative only, not evaluated data.

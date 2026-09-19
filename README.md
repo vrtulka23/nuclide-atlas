@@ -97,7 +97,8 @@ Run the default U-238 age calculation:
 That writes `build/inventory.csv` and `build/inventory.png`. To make the same run without CMake’s plot target:
 
 ```bash
-.venv/bin/python python/plot_inventory.py build/inventory.csv build/inventory.png
+.venv/bin/python python/plot_inventory.py build/inventory.csv build/inventory.png \
+  --scenario dip/scenarios/u238_age.dip --data-dir dip/data
 ```
 
 ### Generate both dashboards
@@ -111,13 +112,15 @@ The convenience helper writes its current result to `build/inventory.png`. Use e
   --scenario dip/scenarios/u238_age.dip \
   --output build/u238-age.csv
 .venv/bin/python python/plot_inventory.py \
-  build/u238-age.csv build/u238-age.png
+  build/u238-age.csv build/u238-age.png \
+  --scenario dip/scenarios/u238_age.dip --data-dir dip/data
 
 ./build/nuclide-atlas --activation \
   --scenario dip/scenarios/u238_activation.dip \
   --output build/u238-activation.csv
 .venv/bin/python python/plot_inventory.py \
-  build/u238-activation.csv build/u238-activation.png
+  build/u238-activation.csv build/u238-activation.png \
+  --scenario dip/scenarios/u238_activation.dip --data-dir dip/data
 ```
 
 This produces `build/u238-age.png` and `build/u238-activation.png`. Activation must be enabled in `dip/build.dip` before the initial build.
@@ -147,10 +150,13 @@ The catalogue now includes deuterium (`H2`), tritium (`H3`), and helium-3 (`He3`
   --scenario dip/scenarios/h2_deuteron_activation.dip \
   --output build/h2-deuteron-activation.csv
 .venv/bin/python python/plot_inventory.py \
-  build/h2-deuteron-activation.csv build/h2-deuteron-activation.png
+  build/h2-deuteron-activation.csv build/h2-deuteron-activation.png \
+  --scenario dip/scenarios/h2_deuteron_activation.dip --data-dir dip/data
 ```
 
-This is a one-group effective-rate model: `rate = deuteron_flux × cross_section`. The cross section must already be averaged over the beam-energy distribution and target depth. The bundled 1 mb value is intentionally illustrative. Beam stopping, Coulomb-barrier penetration, energy-dependent or angle-dependent cross sections, secondary-particle transport, heating, and competing channels are not modelled. Use evaluated reaction data and a dedicated transport/depletion code for quantitative work.
+This is a one-group effective-rate model: `rate = deuteron_flux × cross_section`. The cross section must already be averaged over the beam-energy distribution and target depth. The bundled 1 mb value is intentionally illustrative. Deuteron dashboards include both instantaneous reaction rate and trapezoidally integrated reaction yield, making the accumulated irradiation effect visible. Beam stopping, Coulomb-barrier penetration, energy-dependent or angle-dependent cross sections, secondary-particle transport, heating, and competing channels are not modelled. Use evaluated reaction data and a dedicated transport/depletion code for quantitative work.
+
+![Deuterium H-2(d,p)H-3 dashboard: inventories, decay signals, instantaneous reaction rate, and cumulative reaction yield](docs/assets/deuteron-dashboard.png)
 
 ### Build-time activation switch
 
@@ -180,6 +186,19 @@ Query rather than simulate:
 ```
 
 `--explain` displays the resolved record, dimensional and relationship checks, and its cited record provenance. `--trace` follows a supported field to its resolved value, original unit, SI conversion, DIPL source location, schema path, and provenance record. Citation metadata is presently attached at the record `id`, so trace reports that relationship explicitly rather than implying field-level citations that the seed data does not yet carry.
+
+## DIPL-controlled dashboards
+
+Each simulation scenario contains typed plot settings. The Python renderer imports `scinumtools3.dip`, parses the same catalogue and scenario as the C++ solver, and reads the resolved `plot` group directly—there is no JSON bridge or duplicated Python settings file.
+
+```dip
+plot.dashboard_title = "Deuterium H-2(d,p)H-3 irradiation dashboard"
+plot.dpi = 180
+plot.annotate_cooldown = true
+plot.show_cumulative_yield = true
+```
+
+`dashboard_title`, `dpi` (72–600), `annotate_cooldown`, and `show_cumulative_yield` are validated by the scenario schema. The final option controls the deuteron-only integrated-yield panel.
 
 ## DIPH5 environment persistence
 

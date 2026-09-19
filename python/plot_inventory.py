@@ -11,6 +11,7 @@ from pathlib import Path
 os.environ.setdefault("MPLBACKEND", "Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+from scinumtools3.dip import DIP
 
 
 def _log_time_edges(years: np.ndarray) -> np.ndarray:
@@ -33,14 +34,59 @@ def _phase_marker(axes: list[plt.Axes], years: np.ndarray, rows: list[dict[str, 
     axes[0].text(transition, 1.02, "cooldown", transform=axes[0].get_xaxis_transform(), ha="left", va="bottom", fontsize=8)
 
 
-def main(input_name: str, output_name: str) -> None:
+def _plot_settings(scenario_name: str | None, data_dir_name: str | None) -> dict[str, object]:
+    settings: dict[str, object] = {
+        "dashboard_title": "Nuclide Atlas dashboard",
+        "dpi": 180,
+        "annotate_cooldown": True,
+        "show_cumulative_yield": True,
+    }
+    if scenario_name is None:
+        return settings
+    scenario = Path(scenario_name).resolve()
+    data_dir = Path(data_dir_name).resolve() if data_dir_name else scenario.parent.parent / "data"
+    parser = DIP()
+    original_directory = Path.cwd()
+    try:
+        # DIPL source imports in nuclear.dip are relative to dip/data.
+        os.chdir(data_dir)
+        parser.add_file(data_dir / "nuclear.dip", absolute=True)
+        parser.add_file(scenario, absolute=True)
+        environment = parser.parse()
+    finally:
+        os.chdir(original_directory)
+    roots = ("simulation", "activation", "deuteron_activation")
+    root = next((candidate for candidate in roots if _has_plot_group(environment, candidate)), None)
+    if root is None:
+        raise SystemExit("scenario has no supported DIPL plot group")
+    for key in settings:
+        settings[key] = environment[f"{root}.plot.{key}"].value
+    if not isinstance(settings["dashboard_title"], str):
+        raise SystemExit("plot dashboard_title must be a string")
+    if not isinstance(settings["dpi"], int) or not 72 <= settings["dpi"] <= 600:
+        raise SystemExit("plot dpi must be an integer between 72 and 600")
+    if not isinstance(settings["annotate_cooldown"], bool) or not isinstance(settings["show_cumulative_yield"], bool):
+        raise SystemExit("plot boolean settings must be true or false")
+    return settings
+
+
+def _has_plot_group(environment: object, root: str) -> bool:
+    try:
+        environment[f"{root}.plot.dpi"].value
+        return True
+    except Exception:
+        return False
+
+
+def main(input_name: str, output_name: str, scenario_name: str | None = None, data_dir_name: str | None = None) -> None:
+    settings = _plot_settings(scenario_name, data_dir_name)
     with Path(input_name).open(newline="") as stream:
-        rows = list(csv.DictReader(stream))
-    if not rows:
+        all_rows = list(csv.DictReader(stream))
+    if not all_rows:
         raise SystemExit("inventory CSV is empty")
     # A logarithmic timeline is the point of this plot.  The CSV still carries
     # the exact t=0 row; omit it here because a log axis cannot display zero.
-    rows = [row for row in rows if float(row["time_yr"]) > 0.0]
+    rows = [row for row in all_rows if float(row["time_yr"]) > 0.0]
     years = np.asarray([float(row["time_yr"]) for row in rows])
     atom_columns = [
         key for key in rows[0]
@@ -52,9 +98,11 @@ def main(input_name: str, output_name: str) -> None:
         (name for name in ("capture_reactions_per_s", "deuteron_reactions_per_s", "capture_rate_bq") if name in rows[0]), None
     )
     has_reaction = reaction_column is not None
+    has_deuteron_reaction = reaction_column == "deuteron_reactions_per_s" and settings["show_cumulative_yield"]
     has_signals = has_activity or has_q_power
-    panel_count = 3 + int(has_signals) + int(has_reaction)
+    panel_count = 3 + int(has_signals) + int(has_reaction) + int(has_deuteron_reaction)
     figure, axes_grid = plt.subplots(panel_count, 1, figsize=(13, 2.8 + 2.8 * panel_count), layout="constrained", squeeze=False)
+    figure.suptitle(settings["dashboard_title"], fontsize=15, fontweight="bold")
     axes = axes_grid[:, 0]
     labels = [column.removesuffix("_atoms") for column in atom_columns]
     atoms = np.asarray([[max(float(row[column]), 1.0) for row in rows] for column in atom_columns])
@@ -121,6 +169,28 @@ def main(input_name: str, output_name: str) -> None:
         reaction_ax.set(xscale="log", yscale="log", xlabel="time [Julian years]", ylabel="reactions / s", title=title)
         reaction_ax.grid(True, which="both", alpha=0.2)
 
+    if has_deuteron_reaction:
+        yield_ax = axes[next_axis]
+        next_axis += 1
+        all_times_s = np.asarray([float(row["time_s"]) for row in all_rows])
+        all_rates = np.asarray([float(row[reaction_column]) for row in all_rows])
+        # Trapezoidal integration keeps the yield tied to the solver's exact
+        # inventories while making the accumulated deuteron exposure visible.
+        all_cumulative_yield = np.zeros_like(all_rates)
+        all_cumulative_yield[1:] = np.cumsum(0.5 * (all_rates[1:] + all_rates[:-1]) * np.diff(all_times_s))
+        cumulative_yield = all_cumulative_yield[np.asarray([float(row["time_yr"]) > 0.0 for row in all_rows])]
+        visible = cumulative_yield > 0.0
+        yield_ax.plot(years[visible], cumulative_yield[visible], color="#d97706", linewidth=2.2)
+        yield_ax.fill_between(years[visible], cumulative_yield[visible], cumulative_yield[visible].min() * 0.7, color="#fcd34d", alpha=0.32)
+        yield_ax.set(
+            xscale="log",
+            yscale="log",
+            xlabel="time [Julian years]",
+            ylabel="integrated reactions",
+            title="Cumulative deuteron-reaction yield",
+        )
+        yield_ax.grid(True, which="both", alpha=0.2)
+
     composition_ax = axes[next_axis]
     final_atoms = atoms[:, -1]
     order = np.argsort(final_atoms)
@@ -128,14 +198,21 @@ def main(input_name: str, output_name: str) -> None:
     composition_ax.set(xscale="log", xlabel="atoms at final time", title="Final inventory composition")
     composition_ax.grid(True, which="both", axis="x", alpha=0.2)
 
-    _phase_marker(list(axes[:-1]), years, rows)
+    if settings["annotate_cooldown"]:
+        _phase_marker(list(axes[:-1]), years, rows)
     for axis in axes:
         axis.spines[["top", "right"]].set_visible(False)
-    figure.savefig(output_name, dpi=180)
+    figure.savefig(output_name, dpi=settings["dpi"])
     print(f"wrote {output_name}")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        raise SystemExit("usage: plot_inventory.py inventory.csv inventory.png")
-    main(*sys.argv[1:])
+    import argparse
+
+    arguments = argparse.ArgumentParser(description="Render a Nuclide Atlas inventory CSV.")
+    arguments.add_argument("inventory_csv")
+    arguments.add_argument("output_png")
+    arguments.add_argument("--scenario", help="DIPL scenario containing the plot settings")
+    arguments.add_argument("--data-dir", help="DIPL catalogue directory (default: <scenario>/../data)")
+    parsed = arguments.parse_args()
+    main(parsed.inventory_csv, parsed.output_png, parsed.scenario, parsed.data_dir)

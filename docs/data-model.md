@@ -37,6 +37,19 @@ simulation : nuclear_simulation
 
 This is more than a template: DIPL applies the schema while parsing and rejects incompatible units or invalid choices before the C++ solver sees them.
 
+## Plot schema
+
+Every simulation contract also includes a typed `plot` group. It makes presentation choices part of the same reviewable scientific scenario as the sample and irradiation inputs:
+
+```dip
+plot.dashboard_title = "U-238 neutron-activation dashboard"
+plot.dpi = 180
+plot.annotate_cooldown = true
+plot.show_cumulative_yield = false
+```
+
+The schema validates a non-empty dashboard title, DPI from 72 through 600, and Boolean panel controls. `python/plot_inventory.py` imports `scinumtools3.dip`, parses the catalogue and selected scenario, and reads this group from the resolved environment directly. This keeps DIPL, rather than Python defaults or an intermediate configuration file, as the source of plot policy. `show_cumulative_yield` applies only to the deuteron-reaction dashboard.
+
 `constants.dip` is equally part of the runtime contract: Avogadro’s constant sets the atom count, `seconds_per_year` sets CSV year conversion, and `joules_per_mev` converts decay Q values to joules. The C++ solver reads and unit-converts these values through PUQ; it does not maintain duplicate numerical literals.
 
 ## Activation-simulation schema

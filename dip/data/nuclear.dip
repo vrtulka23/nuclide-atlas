@@ -72,6 +72,13 @@ $schema nuclear_simulation
       !format "[A-Za-z0-9_./-]+[.]csv"
     include_activity bool
     include_q_power bool
+  plot
+    dashboard_title str
+      !format ".{3,160}"
+    dpi int
+      !condition ({.} >= 72 && {.} <= 600)
+    annotate_cooldown bool
+    show_cumulative_yield bool
 
 # One-group activation model.  A capture reaction is applied during irradiation;
 # natural decay remains active during both irradiation and cooldown.  The
@@ -109,6 +116,13 @@ $schema activation_simulation
       !format "[A-Za-z0-9_./-]+[.]csv"
     include_activity bool
     include_q_power bool
+  plot
+    dashboard_title str
+      !format ".{3,160}"
+    dpi int
+      !condition ({.} >= 72 && {.} <= 600)
+    annotate_cooldown bool
+    show_cumulative_yield bool
 
 # One-group deuteron reaction contract.
 $schema deuteron_activation_simulation
@@ -132,6 +146,11 @@ $schema deuteron_activation_simulation
     csv str
     include_activity bool
     include_q_power bool
+  plot
+    dashboard_title str
+    dpi int
+    annotate_cooldown bool
+    show_cumulative_yield bool
 
 nuclear
   constants {constants?constants.}

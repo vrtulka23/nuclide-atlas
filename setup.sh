@@ -75,7 +75,8 @@ plot_project() {
         $do_run || run_project
         cmake -E make_directory "${build_dir}/.plot-cache"
         cmake -E env "MPLCONFIGDIR=${build_dir}/.plot-cache" "XDG_CACHE_HOME=${build_dir}/.plot-cache" \
-            "${python_bin}" "${root_dir}/python/plot_inventory.py" "${build_dir}/inventory.csv" "${build_dir}/inventory.png"
+            "${python_bin}" "${root_dir}/python/plot_inventory.py" "${build_dir}/inventory.csv" "${build_dir}/inventory.png" \
+            --scenario "${scenario}" --data-dir "${root_dir}/dip/data"
     else
         cmake --build "${build_dir}" --target plot
     fi

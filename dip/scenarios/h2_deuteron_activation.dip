@@ -18,3 +18,7 @@ deuteron_activation : deuteron_activation_simulation
   output.csv = "h2-deuteron-activation.csv"
   output.include_activity = true
   output.include_q_power = true
+  plot.dashboard_title = "Deuterium H-2(d,p)H-3 irradiation dashboard"
+  plot.dpi = 180
+  plot.annotate_cooldown = true
+  plot.show_cumulative_yield = true

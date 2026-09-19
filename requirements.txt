@@ -1,2 +1,2 @@
 matplotlib>=3.8
-
+scinumtools3>=0.8.1,<0.9

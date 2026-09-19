@@ -116,6 +116,8 @@ if(SNT_NUCLEAR_ENABLE_PLOT_TARGET AND Python3_Interpreter_FOUND)
                 "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/python/plot_inventory.py"
                 "${CMAKE_CURRENT_BINARY_DIR}/inventory.csv"
                 "${CMAKE_CURRENT_BINARY_DIR}/inventory.png"
+                --scenario "${CMAKE_CURRENT_SOURCE_DIR}/dip/${SNT_NUCLEAR_DEFAULT_SCENARIO_RELATIVE}"
+                --data-dir "${CMAKE_CURRENT_SOURCE_DIR}/dip/data"
         DEPENDS nuclide-atlas
         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
         COMMENT "Plotting decay-chain inventory"

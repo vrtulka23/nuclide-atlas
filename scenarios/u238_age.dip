@@ -1,18 +1,11 @@
 # A deliberately small, human-editable simulation request.
-simulation
-  title str = "One gram of uranium-238 through one solar-system age"
-  sample
-    isotope str = "U238"
-    mass float = 1 g
-      !condition ({.} > 0 g)
-  duration float = 4.5 Gyr
-    !condition ({.} > 0 s)
-  points int = 1000
-    !condition ({.} >= 2)
-  time_grid str = "logarithmic"
-    !options ["linear", "logarithmic"]
-  minimum_time float = 1 us
-    !condition ({.} > 0 s)
-  output
-    csv str = "inventory.csv"
-    include_activity bool = true
+simulation : nuclear_simulation
+  title = "One gram of uranium-238 through one solar-system age"
+  sample.isotope = "U238"
+  sample.mass = 1 g
+  duration = 4.5 Gyr
+  points = 1000
+  time_grid = "logarithmic"
+  minimum_time = 1 us
+  output.csv = "inventory.csv"
+  output.include_activity = true

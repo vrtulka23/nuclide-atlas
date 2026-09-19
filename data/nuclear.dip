@@ -21,6 +21,27 @@ $source Pu239 = "isotopes/Pu239.dip"
 $source U235 = "isotopes/U235.dip"
 $source Pb207 = "isotopes/Pb207.dip"
 
+# Shared contract for every calculation request. Scenarios only assign values;
+# their types, units, constraints, and allowed grid choices live here.
+$schema nuclear_simulation
+  title str
+  sample
+    isotope str
+      !format "[A-Z][a-z]?[0-9]+m?"
+    mass float g
+      !condition ({.} > 0 g)
+  duration float s
+    !condition ({.} > 0 s)
+  points int
+    !condition ({.} >= 2)
+  time_grid str
+    !options ["linear", "logarithmic"]
+  minimum_time float s
+    !condition ({.} > 0 s)
+  output
+    csv str
+    include_activity bool
+
 nuclear
   constants {constants?constants.}
   elements

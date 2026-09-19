@@ -19,7 +19,7 @@ All numerical fields have a unit. `data/nuclear.dip` imports a file per record a
 
 ## Isotope-record schema
 
-The registry declares an `isotope_record` schema and instantiates it for every entry in `nuclear.isotopes`. It then injects the scalar values from each source record into that schema-backed entry. This is intentional: the schema validates the **resolved database** consumed by the C++ solver, while the small source files stay independently reviewable and retain their value-level provenance.
+The registry declares `nuclear.isotopes` as a keyed `map : isotope_record`. DIPL automatically applies the schema to every item, while each source is imported whole into its corresponding `nuclear.isotopes[<id>]` entry. This validates the **resolved database** consumed by the C++ solver without repeating field-by-field injections; the small source files remain independently reviewable and retain their value-level provenance.
 
 The shared contract checks isotope and daughter identifier formats, labels, positive molar mass, non-negative half-life and decay energy, a branching fraction in `[0, 1]`, and the supported serial-chain modes (`alpha`, `beta-`, `stable`). A malformed imported record therefore fails during DIPL parsing, before a calculation can begin.
 

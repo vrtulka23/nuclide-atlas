@@ -87,7 +87,7 @@ double quantity_as(const Environment& env, const std::string& path, const std::s
 }
 
 Nuclide read_nuclide(const Environment& env, const std::string& id) {
-    const std::string root = "nuclear.isotopes." + id;
+    const std::string root = "nuclear.isotopes[" + id + "]";
     Nuclide n;
     n.id = env[root + ".id"].as<std::string>();
     n.label = env[root + ".label"].as<std::string>();

@@ -113,7 +113,7 @@ Query rather than simulate:
 
 A scenario states the sample, duration, output density, time grid, and output file. The shipped scenarios use a logarithmic reporting grid (plus `t=0`) so a single graph can show microsecond daughters and gigayear parents. Units are part of the data, never implied by a comment. Invalid mass, duration, point count, or grid settings are rejected by DIPL before the C++ solver runs.
 
-The database root, `data/nuclear.dip`, uses `$source` directives and imports each independently maintained isotope into `nuclear.isotopes.<id>`. The C++ program follows the selected daughter path dynamically, so adding an isotope is data work:
+The database root, `data/nuclear.dip`, uses `$source` directives and imports each independently maintained isotope as an item in the schema-backed `nuclear.isotopes[<id>]` map. The C++ program follows the selected daughter path dynamically, so adding an isotope is data work:
 
 1. Create `data/isotopes/X.dip` from a nearby record.
 2. Add the source and import in `data/nuclear.dip`.

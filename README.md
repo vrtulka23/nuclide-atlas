@@ -58,6 +58,15 @@ cmake -S . -B build -G Ninja -DCMAKE_PREFIX_PATH="$HOME/.local"
 cmake --build build
 ```
 
+For the usual configure/build/test/run loop, use the included helper:
+
+```bash
+chmod +x dev.sh
+./dev.sh -bctr
+```
+
+`-b` configures, `-c` compiles, `-t` tests, `-r` runs, `-p` plots, and `--clean` removes only `build/`. Run `./dev.sh --help` for all options.
+
 Run the default U-238 age calculation:
 
 ```bash
